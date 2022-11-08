@@ -16,13 +16,16 @@ Return `Vector` of `length(dims)`
 sparse finite-difference matrices
 of order `order`,
 one for each dimension.
-The `kwargs` are passed
-to `spdiff1` (for `order = 1`)
-or `spdiff2` (for `order = 2`)
-for each dimension.
+
 Typically one will `vcat` the vector output
 to make a sparse finite-difference matrix
 suitable for the `vec` of a multi-dimensional array.
+
+The `kwargs` are passed
+to `spdiff1` (for `order = 1`)
+or `spdiff2` (for `order = 2`).
+These functions are called once for each dimension.
+The options are `ending` and `T`.
 
 Examples:
 - `spdiff((4,5,6))[1] == kron(I(6*5), spdiff1(4))`
