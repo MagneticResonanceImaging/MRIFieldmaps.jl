@@ -10,7 +10,7 @@ using Test: @test, @testset, @inferred
 
     @test spdiff2(3; ending=:zero) == [2 -1 0; -1  2 -1; 0 -1 2]
     @test spdiff2(3; ending=:first) == [1 -1 0; -1  2 -1; 0 -1 1]
-    @test spdiff2(4; ending=:remove) == [-1  2 -1 0; 0 -1 2 -1]
+    @test spdiff2(4; ending=:remove) == [0 0 0 0; -1  2 -1 0; 0 -1 2 -1; 0 0 0 0]
 
     @test spdiff((4,5,6); order=2)[1] == kron(I(6*5), spdiff2(4))
     @test spdiff((4,5,6); order=2)[2] == kron(I(6), spdiff2(5), I(4))
