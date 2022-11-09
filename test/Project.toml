@@ -1,4 +1,5 @@
 [deps]
+ImageGeoms = "9ee76f2b-840d-4475-b6d6-e485c9297852"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"

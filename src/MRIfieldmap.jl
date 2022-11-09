@@ -15,5 +15,6 @@ module MRIfieldmap
     include("spdiff1.jl")
     include("spdiff2.jl")
     include("spdiff.jl")
+    include("b0map.jl")
 
 end # module
