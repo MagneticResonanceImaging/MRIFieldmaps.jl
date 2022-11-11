@@ -10,9 +10,9 @@ Matlab version originally by MJ Allison
 using StatsBase: median
 
 """
-    (yik, scalefactor) = b0scale(yik, etime; fmax, dmax) 
+    (ydata, scalefactor) = b0scale(ydata, echotime; fmax, dmax)
 
-Scale images to account for R2* effects
+Scale complex images `ydata` to account for R2* effects
 and for magnitude variations
 using `median(di)`
 where
@@ -20,7 +20,7 @@ where
 - `di = ri / sum_k |y_{ik}|^2`
 
 Only values where
-`|yik| > fmax * maximum(abs, yik)` # todo
+`|ydata| > fmax * maximum(abs, ydata)` # todo
 `di > dmax * maximum(di)`
 affect `scalefactor`,
 so it is fine to pass unmasked images here.
@@ -29,40 +29,41 @@ This scaling simplifies regularization parameter selection
 for regularized fieldmap estimation.
 
 # In
-- `yik (dims..., nset)` scan images for `nset` different echo times
-- `etime (nset)` echo times (units of sec if fieldmap is in Hz)
+- `ydata (dims..., ne)` scan images for `ne` different echo times
+- `echotime (ne)` echo times (units of sec if fieldmap is in Hz)
 
 # Option
 - `dmax::Real` threshold for relative `di` value (default `0.1`)
 
 # Out
-- `yik (dims..., nset)` scaled scan images
+- `ydata (dims..., ne)` scaled scan images
 - `scalefactor = sqrt(median(rj))`
 """
 function b0scale(
-    yik::AbstractArray{<:Complex},
-    etime::AbstractVector,
+    ydata::AbstractArray{<:Complex},
+    echotime::Union{AbstractVector{Te}, NTuple{N,Te} where N},
     ;
 #   fmax::Real = 0.1,
     dmax::Real = 0.1,
-)
+) where Te <: RealU
 
-    Base.require_one_based_indexing(yik, etime)
+    Base.require_one_based_indexing(ydata, echotime)
 
-    dims = size(yik)
-    yik = reshape(yik, :, dims[end]) # (*dims, nset)
+    dims = size(ydata)
+    ydata = reshape(ydata, :, dims[end]) # (*dims, ne)
 
-    (nn, nset) = size(yik)
+    (nn, ne) = size(ydata)
+    echotime = echotime / oneunit(eltype(echotime)) # units are irrelevant here
 
 #=
     # Scale by median of first set of data to get rid of large mag_j effects.
     # (Not actually needed, but retained for consistency.)
 
     if fmax > 0
-        y1 = abs.(yik[:,1])
+        y1 = abs.(ydata[:,1])
         scalefactor = median(filter(>(fmax * maximum(y1)), y1))
         scalefactor == 0 && throw("median is zero?")
-        yik ./= scalefactor
+        ydata ./= scalefactor
     else
         scalefactor = 1
     end
@@ -70,26 +71,24 @@ function b0scale(
 
     # Try to compensate for R2 effects on effective regularization.
 
-    d = zeros(Float32, nn)
-    for j in 1:nset
-        for k in 1:nset
-            d += abs2.(yik[:,j] .* yik[:,k]) * (etime[k] - etime[j])^2
-        end
-    end
+    d = reduce(+,
+        abs2.(ydata[:,j] .* ydata[:,k]) * (echotime[k] - echotime[j])^2
+        for j in 1:ne, k in 1:ne
+    )
 
     # divide by numerator of wj^mn -> sum(abs(y)^2)
     # todo: cite eqn #
-    div0 = (x::Number, y::Number) -> iszero(y) ? 0 : x/y
-    d = div0.(d, sum(abs2, yik; dims=2))
+    div0 = (x::Number, y::Number) -> iszero(y) ? 0 : x/y # todo: zero(Tx/Ty)
+    d = div0.(d, sum(abs2, ydata; dims=2))
 
     # compute typical d value
     dtypical = median(filter(>(dmax * maximum(d)), d))
 
     # uniformly scale by the square root of dtypical
     scalefactor = sqrt(dtypical)
-    yik ./= scalefactor
+    ydata ./= scalefactor
 
-    yik = reshape(yik, dims) # (dims..., nset)
+    ydata = reshape(ydata, dims) # (dims..., ne)
 
-    return yik, scalefactor
+    return ydata, scalefactor
 end
