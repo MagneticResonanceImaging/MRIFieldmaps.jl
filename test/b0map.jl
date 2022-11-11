@@ -66,7 +66,7 @@ end
     end
 
     # water-fat
-    (fhat, _, out) = b0map(finit, ydata, etime; mask, niter=5, df=500)
+    (fhat, _, out) = b0map(finit, ydata, etime; mask, niter=5, df=440)
 #   @test maximum(abs, (fhat - ftrue) .* mask) < 5
     @test rmse(fhat) < 2
     @test fhat isa Matrix{Float32}
