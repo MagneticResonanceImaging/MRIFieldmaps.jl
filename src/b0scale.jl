@@ -7,7 +7,7 @@ Matlab version originally by MJ Allison
 
 # todo: think about multiple coil case with smap
 
-using Statistics: median
+using StatsBase: median
 
 """
     (yik, scalefactor) = b0scale(yik, etime; fmax, dmax) 
