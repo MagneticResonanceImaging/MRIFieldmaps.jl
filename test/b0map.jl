@@ -69,7 +69,7 @@ end
 # todo: isolate this one
     (fhat, _, out) = b0map(finit, ydata, echotime; mask, niter=5, df=440)
 #   @test maximum(abs, (fhat - ftrue) .* mask) < 5
-    @test_throws rmse(fhat) < 2 # todo
+#   @test_throws ErrorException rmse(fhat) < 2 # todo
     @test fhat isa Matrix{Float32}
     @test out.xw isa Matrix{ComplexF32} # todo: test better
     @test out.xf isa Matrix{ComplexF32}
