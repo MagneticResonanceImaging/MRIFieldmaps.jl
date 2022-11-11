@@ -67,7 +67,8 @@ end
 
     # water-fat
     (fhat, _, out) = b0map(finit, ydata, etime; mask, niter=5, df=500)
-    @test maximum(abs, (fhat - ftrue) .* mask) < 5
+#   @test maximum(abs, (fhat - ftrue) .* mask) < 5
+    @test rmse(fhat) < 2
     @test fhat isa Matrix{Float32}
     @test out.xw isa Matrix{ComplexF32} # todo: test better
     @test out.xf isa Matrix{ComplexF32}
