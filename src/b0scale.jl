@@ -9,6 +9,11 @@ Matlab version originally by MJ Allison
 
 using StatsBase: median
 
+function div0(x::Tx, y::Ty) where {Tx <: Number, Ty <: Number}
+    return iszero(y) ? zero(oneunit(Tx)/oneunit(Ty)) : x/y
+end
+
+
 """
     (ydata, scalefactor) = b0scale(ydata, echotime; fmax, dmax)
 
@@ -20,13 +25,14 @@ where
 - `di = ri / sum_k |y_{ik}|^2`
 
 Only values where
-`|ydata| > fmax * maximum(abs, ydata)` # todo
 `di > dmax * maximum(di)`
 affect `scalefactor`,
 so it is fine to pass unmasked images here.
 
-This scaling simplifies regularization parameter selection
-for regularized fieldmap estimation.
+This normalization simplifies regularization parameter selection
+for regularized B0 fieldmap estimation.
+See eqn (9) and (15) of Funai & Fessler, Oct. 2008, IEEE T-MI,
+http://doi.org/10.1109/TMI.2008.923956
 
 # In
 - `ydata (dims..., ne)` scan images for `ne` different echo times
@@ -70,15 +76,13 @@ function b0scale(
 =#
 
     # Try to compensate for R2 effects on effective regularization.
-
+    # This uses eqn (15) of Funai&Fessler, with the numerator of (9):
     d = reduce(+,
         abs2.(ydata[:,j] .* ydata[:,k]) * (echotime[k] - echotime[j])^2
         for j in 1:ne, k in 1:ne
     )
 
-    # divide by numerator of wj^mn -> sum(abs(y)^2)
-    # todo: cite eqn #
-    div0 = (x::Number, y::Number) -> iszero(y) ? 0 : x/y # todo: zero(Tx/Ty)
+    # Divide by denominator of eqn (9) of Funai&Fessler
     d = div0.(d, sum(abs2, ydata; dims=2))
 
     # compute typical d value
