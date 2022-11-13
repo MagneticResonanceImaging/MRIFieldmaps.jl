@@ -127,6 +127,21 @@ jim(
 
 
 #=
+### Support mask
+
+Often we want to estimate a fieldmap
+over some spatial support "mask"
+that is smaller than the entire image,
+e.g.,
+only in voxels where the signal is sufficiently large.
+See the
+[ImageGeoms.jl](https://juliaimagerecon.github.io/ImageGeoms.jl/stable/generated/examples/2-mask)
+documentation
+about the related `embed` and `maskit` operations.
+=#
+
+
+#=
 ### Reproducibility
 This page was generated with the following version of Julia:
 =#
