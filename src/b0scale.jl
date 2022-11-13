@@ -5,8 +5,6 @@ Matlab version originally by MJ Allison
 2022-11-10 Jeff Fessler, Julia translation
 =#
 
-# todo: think about multiple coil case with smap
-
 using StatsBase: median
 
 function div0(x::Tx, y::Ty) where {Tx <: Number, Ty <: Number}

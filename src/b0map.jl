@@ -219,7 +219,7 @@ function b0map(
 
     # compute |s_c s_d' y_dj' y_ci| /L/s * (tj - ti)^2
     sjtotal[sjtotal .== 0] .= 1 # avoid outside mask = 0
-    wj_mag ./= sjtotal # todo: use div0 ?
+    wj_mag ./= sjtotal
     if iszero(df)
         wj_mag ./= ne # eqn. (4) in paper for non-fat case
     end
@@ -234,7 +234,7 @@ function b0map(
         out_fs = zeros(length(finit), niter+1)
         out_fs[:,1] .= finit
         costs = zeros(niter+1)
-        # todo store initial cost
+
 #=
         sm = w * vec(d2)' .+ ang2 # (np, ne, nc, nc)
         cost0d = sum(wj_mag .* (1 .- cos.(sm)))
@@ -269,8 +269,6 @@ function b0map(
         ngrad = -grad
 
         if track
-# todo: do this after update
-# todo: validate derivatives of this fancy cost
             costs[iter] = sum(wj_mag .* (1 .- cos.(sm))) + 0.5 * norm(C*w)^2
             chat && @info "iter $(iter-1), cost $(costs[iter])"
         end
