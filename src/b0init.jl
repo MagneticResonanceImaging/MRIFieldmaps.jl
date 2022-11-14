@@ -14,7 +14,7 @@ export b0init
 Classic B0 field map estimation
 based on the phase difference
 of complex images at two different echo times.
-If sensitivity maps (`smaps`) are provided,
+If sensitivity maps (`smap`) are provided,
 complex coil combination is done first.
 This code works with images of arbitrary dimensions (2D, 3D, etc.),
 and with multiple coils.

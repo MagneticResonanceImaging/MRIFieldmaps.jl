@@ -8,7 +8,7 @@ using MRIfieldmap: spdiff
 
 
 """
-    (fhat, times, out) = b0map(finit, ydata, delta; kwargs...)
+    (fhat, times, out) = b0map(finit, ydata, echotime; kwargs...)
 
 Field map estimation from multiple (`ne ≥ 2`) echo-time images,
 using preconditioned nonlinear CG (NCG) with a monotonic line search.
@@ -29,7 +29,7 @@ but internally the code works with `ω = 2π f` (rad/s).
 # In
 - `finit (dims)` initial fieldmap estimate in Hz
 - `ydata (dims..., [nc,] ne)` `ne` sets of complex images for `nc` coils
-- `delta (ne)` vector of `ne` echo time offsets
+- `echotime (ne)` vector of `ne` echo time offsets
 
 # Options
 - `smap (dims...[, nc])` complex coil maps, default `ones(size(finit))`
@@ -48,8 +48,8 @@ but internally the code works with `ω = 2π f` (rad/s).
   * `:chol` may require too much memory
   * `:ichol` (default)
 - `reset` # of iterations before resetting direction (def: `Inf`)
-- `df` Δf value in water-fat imaging (def: 0) units Hz, e.g., 440 at 3T
-- `relamp` relative amplitude in multipeak water-fat (def: `1`)
+- `df` Δf values in water-fat imaging (def: `[0]`) units Hz, e.g., `[440]` at 3T
+- `relamp` relative amplitudes in multi-peak water-fat (def: `[1]`)
 - `lldl_args::NamedTuple` options for `lldl`, default: `(;memory=2)`
 - `track::Bool` if `true` then track cost and save all iterations (def: `false`)
 - `chat::Bool = true` # `@info` updates each iteration
@@ -71,16 +71,16 @@ http://doi.org/10.1109/TCI.2020.3031082
 http://arxiv.org/abs/2005.08661
 """
 function b0map(
-    finit::AbstractArray{<:Real},
+    finit::AbstractArray{<:RealU},
     ydata::Array{<:Complex},
-    delta::AbstractVector{<:Real},
+    echotime::Union{AbstractVector{<:RealU}, NTuple{N,<:RealU} where N},
     ;
     smap::AbstractArray{<:Complex} = ones(ComplexF32, size(finit)..., 1),
     mask::AbstractArray{<:Bool} = trues(size(finit)),
     kwargs...
 )
 
-    Base.require_one_based_indexing(delta, finit, mask, smap)
+    Base.require_one_based_indexing(echotime, finit, mask, smap)
 
     dims = size(finit)
     ndim = length(dims)
@@ -99,7 +99,7 @@ function b0map(
     ne = size(ydata)[ndim+2]
 
     # check dimensions
-    ne == length(delta) || throw("need delta to have length ne=$ne")
+    ne == length(echotime) || throw("need echotime to have length ne=$ne")
     dims == size(mask) || throw("bad mask size $(size(mask)) vs dims=$dims")
     (dims..., nc) == size(smap) ||
         throw("bad smap size $(size(smap)) vs dims=$dims & nc=$nc")
@@ -107,7 +107,7 @@ function b0map(
     (fhat, times, out) = b0map(
         finit[mask],
         reshape(ydata, :, nc, ne)[vec(mask), :, :],
-        delta,
+        echotime,
         reshape(smap, :, nc)[vec(mask), :],
         mask ;
         kwargs...
@@ -134,14 +134,14 @@ For expert use only.
 # In
 - `finit (np)` initial estimate in Hz (`np` is # of pixels in mask)
 - `ydata (np, nc, ne)` `ne` sets of measurements for `nc` coils
-- `delta (ne)` vector of `ne` echo time offsets
+- `echotime (ne)` vector of `ne` echo time offsets
 - `smap (np, nc)` coil maps
 - `mask (N)` logical reconstruction mask
 """
 function b0map(
-    finit::AbstractVector{<:Real},
+    finit::AbstractVector{<:RealU},
     ydata::AbstractArray{<:Complex},
-    delta::AbstractVector{<:Real},
+    echotime::Union{AbstractVector{<:RealU}, NTuple{N,<:RealU} where N},
     smap::AbstractArray{<:Complex},
     mask::AbstractArray{<:Bool},
     ;
@@ -152,22 +152,24 @@ function b0map(
     gamma_type::Symbol = :PR,
     precon::Symbol = :ichol,
     reset::Real = Inf,
-    df::RealU = 0,
-    relamp::Real = 1,
+    df::AbstractVector{<:RealU} = [0f0],
+    relamp::AbstractVector{<:RealU} = [1f0],
     chat::Bool = true,
     chat_iter::Int = 10, # progress report this often
     track::Bool = false,
     lldl_args::NamedTuple = (; memory = 2),
 )
 
+    Base.require_one_based_indexing(df, echotime, finit, mask, relamp, smap)
     t0 = time() # start timer
 
     # check dimensions
     (np, nc, ne) = size(ydata)
-    ne == length(delta) || throw("need delta to have length ne=$ne")
+    ne == length(echotime) || throw("need echotime to have length ne=$ne")
     np == length(finit) || throw("need finit to have length np=$np")
     (np, nc) == size(smap) || throw("need smap to have size (np,nc)=($np,$nc)")
     count(mask) == np || throw("bad mask count")
+    length(relamp) == length(df) || throw("inconsistent df & relamp")
 
     # sparse finite-difference regularization matrix (?,np)
     C = vcat(spdiff(size(mask); order)...)
@@ -176,7 +178,8 @@ function b0map(
     good = iszero.(abs.(C) * .!vec(mask))
     C = C[good,:]
     C = C[:,vec(mask)] # (?,np) apply mask
-    C = sqrt(2f0^l2b) * C
+    β = 2f0^l2b / oneunit(eltype(finit))^2 # unit balancing!
+    C = sqrt(β) * C
     CC = C' * C
 
     # calculate the magnitude and angles used in the data-fit curvatures
@@ -184,23 +187,26 @@ function b0map(
     angy = angle.(ydata)
     angs = angle.(smap)
     if !iszero(df)
-        Gamma = phiInv(relamp, df, delta) # (L,L)
+        # γ in eqn (5) of Lin&Fessler, of size (ne,1+npeak)
+        γwf = [ones(ne) cis.(2f0π*echotime*df') * relamp]
+        # Gamma in eqn (4) of Lin&Fessler, of size (ne,ne)
+        Gamma = γwf * inv(γwf'*γwf) * γwf'
     end
 
     nset = cumsum(1:ne-1)[end]
 
     wj_mag = zeros(Float32, np, nset, nc, nc)
-    d2 = zeros(Float32, 1, nset, 1, 1) # trick
+    d2 = zeros(eltype(Float32(echotime[1])), 1, nset, 1, 1) # trick
     ang2 = zeros(Float32, np, nset, nc, nc)
 
     set = 0
 
     # Precompute data-dependent magnitude and phase factors.
-    for j in 1:ne # for each pair of scans: "m,n" in (3) in the paper
+    for j in 1:ne # for each pair of scans: "m,n" in (3) in Lin&Fessler
         for i in 1:ne
             (i ≥ j) && continue # only need one pair of differences
             set += 1
-            d2[set] = delta[i] - delta[j]
+            d2[set] = echotime[i] - echotime[j]
             for c in 1:nc
                 for d in 1:nc
                     wj_mag[:,set,c,d] .= abs.(smap[:,c] .* conj(smap[:,d]) .*
@@ -225,8 +231,6 @@ function b0map(
     end
     wm_deltaD = wj_mag .* d2
     wm_deltaD2 = wj_mag .* abs2.(d2)
-    any(isnan, ang2) && warn("isnan in ang2")
-    ang2[isnan.(ang2)] .= 0 # avoid atan causing nan
 
     # prepare output variables
     times = zeros(niter+1)
@@ -393,7 +397,7 @@ function b0map(
 
     # output water & fat images
     if !iszero(df)
-        x = decomp(w, relamp, df, delta, smap, ydata)
+        x = decomp(w, relamp, echotime, smap, ydata, γwf)
         out = merge(out, (xw = x[1,:], xf = x[2,:]))
     end
 
@@ -412,21 +416,13 @@ function Adercurv(d2, ang2, wm_deltaD, wm_deltaD2, w)
 end
 
 
-function phiInv(relamp, df, delta)
-    ne = length(delta)
-    phi = [ones(ne) sum(relamp .* cis.(2π*delta*df); dims=2)] # (n,2)
-    Gamma = phi * inv(phi'*phi) * phi'
-    return Gamma
-end
-
-
-function decomp(w, relamp, df, delta, smap, ydata)
+# eqn (7) of Lin&Fessler
+function decomp(w, relamp, echotime, smap, ydata, γwf)
     (np,nc,ne) = size(ydata)
-    phi = [ones(ne) sum(relamp .* cis.(2π*delta*df); dims=2)] # (ne,2)
-    x = zeros(ComplexF32, 2,np) # water,fat
+    x = zeros(ComplexF32, 2, np) # water,fat
     for ip in 1:np
-        B = phi .* cis.(w[ip] * delta) # (ne,2)
-        B = kron(smap[ip,:], B) # (ne*nc,2) with ne varying fastest
+        B = γwf .* cis.(w[ip] * echotime) # (ne,1+npeak)
+        B = kron(smap[ip,:], B) # (ne*nc,1+npeak) with ne varying fastest
         yc = transpose(ydata[ip,:,:]) # (nc, ne) -> (ne, nc)
         x[:,ip] .= B \ vec(yc) # (2,)
     end

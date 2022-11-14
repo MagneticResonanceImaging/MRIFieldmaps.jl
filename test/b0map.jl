@@ -1,6 +1,6 @@
 # test/b0map.jl
 
-using MRIfieldmap: b0map, b0scale
+using MRIfieldmap: b0map, b0scale, b0init
 using Test: @test, @testset, @test_throws, @inferred
 using Unitful: s
 using ImageGeoms: ImageGeom, circle
@@ -16,16 +16,17 @@ jif = (args...; kwargs...) -> jim(args...; prompt=false, kwargs...)
 @testset "b0map" begin
 #   @inferred b0map() # not type stable - too many "out" options
 
-    u = 1s # todo
-u = 1
+#   u = 1s
+    u = 1 # units not supported by lldl method
     echotime = [0, 2, 10] * 1f-3u # echo times
+    ne = length(echotime)
     ig = ImageGeom( dims=(32,30) )
     mask = circle(ig)
     # simple test b0 fieldmap and image
     ftrue = exp.(-0.1f0 * (abs2.(axes(ig)[1]) .+ abs2.(axes(ig)[2]')))
-    ftrue = (-10 .+ 50 * ftrue) / u
+    ftrue = (-10 .+ 50 * ftrue) / 1u
     rmse = fhat -> round(norm((fhat - ftrue) .* mask) / sqrt(count(mask)); digits=1)
-    flim = (-20u, 40u)
+    flim = (-20/u, 40/u)
     xtrue = mask +
         (abs.(axes(ig)[1])/ig.dims[1] .+ abs.(axes(ig)[2]')/ig.dims[2] .< 0.3)
 
@@ -47,7 +48,7 @@ end
     ydata .+= 0.03 * randn(ComplexF32, size(ydata))
     ydata, _ = b0scale(ydata, echotime)
 
-    finit = angle.(ydata[:,:,2] .* conj(ydata[:,:,1])) / (echotime[2] - echotime[1]) / 2f0π
+    finit = b0init(reshape(ydata, ig.dims..., 1, ne), echotime)
     finit .*= mask
 
     for track in (false, true)
@@ -80,7 +81,8 @@ end
     seed!(0)
     ydata .+= 0.04 * randn(ComplexF32, size(ydata))
     ydata, _ = b0scale(ydata, echotime)
-    finit = angle.(ydata[:,:,1,2] .* conj(ydata[:,:,1,1])) / (echotime[2] - echotime[1]) / 2f0π
+#   finit = angle.(ydata[:,:,1,2] .* conj(ydata[:,:,1,1])) / (echotime[2] - echotime[1]) / 2f0π
+    finit = b0init(ydata, echotime; smap)
 
     let
         (fhat, times, out) = b0map(finit, ydata, echotime; mask, smap,
