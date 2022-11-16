@@ -33,14 +33,15 @@ Field map estimation from multiple (`ne ≥ 2`) echo-time images,
 function b0model(
     fmap::AbstractArray{Tf},
     xw::AbstractArray{Tx,D},
-    echotime::Union{AbstractVector{<:RealU}, NTuple{N,<:RealU} where N},
+    echotime::Union{AbstractVector{Te}, NTuple{N,Te} where N},
     ;
     df::AbstractVector{<:RealU} = [0f0*oneunit(Tf)],
     relamp::AbstractVector{<:RealU} = [1f0],
     smap::AbstractArray{<:Complex} = ones(ComplexF32, size(fmap)..., 1),
-    xf::AbstractArray{<:Complex} = zeros(Tx, size(fmap)),
+    xf::AbstractArray{<:Number} = zeros(Tx, size(fmap)),
     relax::AbstractArray{<:RealU} = zeros(Tf, size(fmap)),
-)::Array{Tx,D+2} where {D, Tf <: RealU, Tx <: Complex}
+    T::DataType = promote_type(Tx, ComplexF32, eltype(oneunit(Tf)*oneunit(Te))),
+)::Array{T,D+2} where {D, Te <: RealU, Tf <: RealU, Tx <: Number}
 
     Base.require_one_based_indexing(echotime, fmap, smap, xf, xw)
 

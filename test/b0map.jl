@@ -1,6 +1,6 @@
 # test/b0map.jl
 
-using MRIfieldmap: b0map, b0scale, b0init
+using MRIfieldmap: b0map, b0scale, b0init, b0model
 using Test: @test, @testset, @test_throws, @inferred
 using Unitful: s
 using ImageGeoms: ImageGeom, circle
@@ -20,7 +20,8 @@ jif = (args...; kwargs...) -> jim(args...; prompt=false, kwargs...)
     u = 1 # units not supported by lldl method
     echotime = [0, 2, 10] * 1f-3u # echo times
     ne = length(echotime)
-    ig = ImageGeom( dims=(32,30) )
+    dims = (32,30)
+    ig = ImageGeom( ; dims )
     mask = circle(ig)
     # simple test b0 fieldmap and image
     ftrue = exp.(-0.1f0 * (abs2.(axes(ig)[1]) .+ abs2.(axes(ig)[2]')))
@@ -41,9 +42,8 @@ end
 =#
 
     # single coil 2D case
+    ydata = @inferred b0model(ftrue, xtrue, echotime)
 
-    ydata = [xtrue .* cis.(2f0π * ftrue * ΔTE) for ΔTE in echotime]
-    ydata = cat(dims=3, ydata...)
     seed!(0)
     ydata .+= 0.03 * randn(ComplexF32, size(ydata))
     ydata, _ = b0scale(ydata, echotime)
@@ -72,17 +72,12 @@ end
     # multiple coil 2D case
 
     smap = cat(fill(1f0+2im, ig.dims), fill(3-1im, ig.dims); dims=3) # (dims..., nc)
-
-    ydata = [xtrue .* cis.(2f0π * ftrue * ΔTE) for ΔTE in echotime]
-    ydata = cat(dims=3, ydata...) # (dims..., ne)
-#   ydata = ydata .* reshape(smap, ig.dims..., 1, :)
-    ydata = reshape(ydata, ig.dims..., 1, :) # (dims..., 1, ne)
-    ydata = smap .* ydata
+    ydata = @inferred b0model(ftrue, xtrue, echotime; smap)
     seed!(0)
     ydata .+= 0.04 * randn(ComplexF32, size(ydata))
     ydata, _ = b0scale(ydata, echotime)
-#   finit = angle.(ydata[:,:,1,2] .* conj(ydata[:,:,1,1])) / (echotime[2] - echotime[1]) / 2f0π
     finit = b0init(ydata, echotime; smap)
+# todo: init and scale in b0map top level
 
     let
         (fhat, times, out) = b0map(finit, ydata, echotime; mask, smap,
