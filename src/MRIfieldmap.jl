@@ -12,6 +12,12 @@ module MRIfieldmap
     """
     const RealU = Number # Union{Real, Unitful.Length}
 
+    """
+        Echotime{T} = Union{AbstractVector{<:T}, NTuple{N,<:T} where N}
+    The echo times can be a vector or a Tuple.
+    """
+    Echotime{T} = Union{AbstractVector{<:T}, NTuple{N,<:T} where N}
+
     include("spdiff1.jl")
     include("spdiff2.jl")
     include("spdiff.jl")

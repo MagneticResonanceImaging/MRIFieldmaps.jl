@@ -1,6 +1,6 @@
 # test/b0map.jl
 
-using MRIfieldmap: b0map, b0scale, b0init, b0model
+using MRIfieldmap: b0map, b0scale, b0model
 using Test: @test, @testset, @test_throws, @inferred
 using Unitful: s
 using ImageGeoms: ImageGeom, circle
@@ -34,7 +34,7 @@ jif = (args...; kwargs...) -> jim(args...; prompt=false, kwargs...)
 #=
 function showit(fhat)
     jim(jif(ftrue, "ftrue"), jif(mask), jif(xtrue, "xtrue"),
-        jif(finit.*mask, "finit"),
+        jif(out.finit.*mask, "finit"),
         jif(fhat, "fhat"; clim=flim, xlabel="$(rmse(fhat))"),
         jif(fhat-ftrue, "err"),
     )
@@ -48,23 +48,20 @@ end
     ydata .+= 0.03 * randn(ComplexF32, size(ydata))
     ydata, _ = b0scale(ydata, echotime)
 
-    finit = b0init(reshape(ydata, ig.dims..., 1, ne), echotime)
-    finit .*= mask
-
     for track in (false, true)
-        (fhat, _, _) = b0map(finit, ydata, echotime; mask,
+        (fhat, _, _) = b0map(ydata, echotime; mask,
             niter=5, track, chat=false)
         @test maximum(abs, (fhat - ftrue) .* mask) < 2
     end
 
     for precon in (:I, :diag, :chol, :ichol)
-        (fhat, _, _) = b0map(finit, ydata, echotime; mask,
+        (fhat, _, _) = b0map(ydata, echotime; mask,
             niter=5, track=false, precon, chat=false)
         @test maximum(abs, (fhat - ftrue) .* mask) < 2
     end
 
     for gamma_type in (:FR, :PR)
-        (fhat, _, _) = b0map(finit, ydata, echotime; mask,
+        (fhat, _, _) = b0map(ydata, echotime; mask,
             niter=5, track=false, gamma_type, chat=false)
         @test maximum(abs, (fhat - ftrue) .* mask) < 2
     end
@@ -76,18 +73,16 @@ end
     seed!(0)
     ydata .+= 0.04 * randn(ComplexF32, size(ydata))
     ydata, _ = b0scale(ydata, echotime)
-    finit = b0init(ydata, echotime; smap)
-# todo: init and scale in b0map top level
+# todo: scale in b0map top level
 
     let
-        (fhat, times, out) = b0map(finit, ydata, echotime; mask, smap,
+        (fhat, times, out) = b0map(ydata, echotime; mask, smap,
             niter=5, chat=false)
         @test maximum(abs, (fhat - ftrue) .* mask) < 2
     end
 
     let
-        (fhat, times, out) = b0map(finit, ydata[:,:,1,:], echotime; mask,
-            # smap=ones(ComplexF32,ig),
+        (fhat, times, out) = b0map(ydata, echotime; mask,
             niter=9, chat=false)
         @test maximum(abs, (fhat - ftrue) .* mask) < 2
     end

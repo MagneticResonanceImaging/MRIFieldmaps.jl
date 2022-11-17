@@ -8,12 +8,15 @@ using MRIfieldmap: spdiff
 
 
 """
-    (fhat, times, out) = b0map(finit, ydata, echotime; kwargs...)
+    (fhat, times, out) = b0map(ydata, echotime; kwargs...)
 
 Field map estimation from multiple (`ne ≥ 2`) echo-time images,
 using preconditioned nonlinear CG (NCG) with a monotonic line search.
 This code works with images of arbitrary dimensions (2D, 3D, etc.),
 and with multiple coils.
+
+Caution:
+single coil data must be reshaped to size `(dims..., 1, ne)`.
 
 The cost function for the single-coil case is:
 `cost(w) = ∑_{j=1}^{#voxel} ∑_{m=1}^ne ∑_{n=1}^ne
@@ -22,20 +25,22 @@ where `t_n` denotes the echo time of the `n`th scan and
 `R(w) = 0.5 * | C * w |^2`
 is a quadratic roughness regularizer
 based on 1st-order or 2nd-order finite differences.
+See the documentation for the general multi-coil case.
 
 The initial field map `finit` and output `fhat` are field maps in Hz,
 but internally the code works with `ω = 2π f` (rad/s).
 
 # In
-- `finit (dims)` initial fieldmap estimate in Hz
-- `ydata (dims..., [nc,] ne)` `ne` sets of complex images for `nc` coils
-- `echotime (ne)` vector of `ne` echo time offsets
+- `ydata (dims..., nc, ne)` `ne` sets of complex images for `nc ≥ 1` coils
+- `echotime::Echotime (ne ≥ 2)` echo time offsets (in seconds)
 
 # Options
-- `smap (dims...[, nc])` complex coil maps, default `ones(size(finit))`
+- `finit (dims)` initial fieldmap estimate (in Hz); default from `b0init()`
+- `smap (dims..., nc)` complex coil maps; default `ones(size(ydata)[1:end-1])`
 - `mask (dims...)` logical reconstruction mask; default: `trues(size(finit))`
 - `ninner` # of inner iterations for monotonic line search
   default: `3` inner iterations
+- `threshold::Real = 0` for `b0init()`
 - `niter` # of outer iterations (def: `30`)
 - `order` order of the finite-difference matrix (def: `2`)
 - `l2b` `log2` of regularization parameter (def: `-6`)
@@ -60,6 +65,7 @@ but internally the code works with `ω = 2π f` (rad/s).
 - `times (niter+1)` wall time for each iteration
 - `out::NamedTuple` that contains:
    * `(xw, xf) (dims)` water / fat images if `!iszero(df)`
+   * `finit (dims)` initial fieldmap
 - if `track == true` then `out` also contains:
    * `costs (niter+1)` (nonconvex) cost for each iteration
    * `fhats (dims, niter+1)` fieldmap estimates every iteration
@@ -70,10 +76,31 @@ C Y Lin, J A Fessler,
 http://doi.org/10.1109/TCI.2020.3031082
 http://arxiv.org/abs/2005.08661
 """
+b0map
+
+
+function b0map(
+    ydata::Array{<:Complex, D},
+    echotime::Echotime,
+    ;
+    smap::AbstractArray{<:Complex} = ones(ComplexF32, size(ydata)[1:end-1]),
+    threshold::Real = 0,
+    finit::AbstractArray{<:RealU} = b0init(ydata, echotime; smap, threshold),
+    kwargs...
+) where {D}
+
+    D < 4 && @warn("D = $D < 4 is appropriate only for 1D MRI")
+
+    (fhat, times, out) = b0map(finit, ydata, echotime; smap, kwargs...)
+    out = merge(out, (; finit))
+    return (fhat, times, out)
+end
+
+
 function b0map(
     finit::AbstractArray{<:RealU},
     ydata::Array{<:Complex},
-    echotime::Union{AbstractVector{<:RealU}, NTuple{N,<:RealU} where N},
+    echotime::Echotime,
     ;
     smap::AbstractArray{<:Complex} = ones(ComplexF32, size(finit)..., 1),
     mask::AbstractArray{<:Bool} = trues(size(finit)),
@@ -83,23 +110,11 @@ function b0map(
     Base.require_one_based_indexing(echotime, finit, mask, smap)
 
     dims = size(finit)
-    ndim = length(dims)
-    if ndims(smap) == ndim
-        smap = reshape(smap, size(smap)..., 1) # nc=1 special case
-    end
-    nc = size(smap, ndim+1) # ≥ 1
-
-    # handle ydata size (dims..., ne) when nc=1
-    ndims(ydata) ∈ (ndim+1, ndim+2) ||
-        throw("ydata ndims=$(ndims(ydata)) vs ndim=$ndim")
-    size(ydata)[1:ndim] == dims || throw("bad ydata size")
-    if nc == 1 && ndims(ydata) == ndim + 1
-        ydata = reshape(ydata, dims..., 1, size(ydata, ndim+1))
-    end
-    ne = size(ydata)[ndim+2]
+    nc = size(smap)[end] # ≥ 1
+    ne = length(echotime)
 
     # check dimensions
-    ne == length(echotime) || throw("need echotime to have length ne=$ne")
+    (dims..., nc, ne) == size(ydata) || throw("bad ydata size")
     dims == size(mask) || throw("bad mask size $(size(mask)) vs dims=$dims")
     (dims..., nc) == size(smap) ||
         throw("bad smap size $(size(smap)) vs dims=$dims & nc=$nc")
@@ -141,7 +156,7 @@ For expert use only.
 function b0map(
     finit::AbstractVector{<:RealU},
     ydata::AbstractArray{<:Complex},
-    echotime::Union{AbstractVector{<:RealU}, NTuple{N,<:RealU} where N},
+    echotime::Echotime,
     smap::AbstractArray{<:Complex},
     mask::AbstractArray{<:Bool},
     ;
