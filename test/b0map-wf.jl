@@ -1,6 +1,6 @@
 # test/b0map-wf.jl (B0 fieldmap in water/fat separation case)
 
-using MRIfieldmap: b0map, b0init, b0scale
+using MRIfieldmap: b0map, b0model, b0init, b0scale
 using Test: @test, @testset, @test_throws, @inferred
 #using Unitful: s # lldl does not support units
 using ImageGeoms: ImageGeom, circle
@@ -51,23 +51,15 @@ end
     # water and fat images as ramps with random phases
     T = Float32
     xwtrue = mask .* (T.((1:nx) / nx) * ones(T, ny)') * 10 .* cis.(rand(T, nx,ny))
-    xftrue = 0mask .* (ones(T, nx) * T.((1:ny)' / ny)) * 10 .* cis.(rand(T, nx,ny))
-
+    xftrue = mask .* (ones(T, nx) * T.((1:ny)' / ny)) * 10 .* cis.(rand(T, nx,ny))
     df = [440f0] # Hz fat shift
     relamp = [1f0]
-    ywtrue = [xwtrue .* cis.(2f0π * ftrue * ΔTE) for ΔTE in echotime]
-    ywtrue = cat(dims=3, ywtrue...)
-    yftrue = [xftrue .* cis.(2f0π * (ftrue .+ df) * ΔTE) for ΔTE in echotime]
-    yftrue = cat(dims=3, yftrue...)
-    ydata = ywtrue + yftrue
 
     smap = [fill(1f0+2im, ig.dims), fill(3-1im, ig.dims)] # nc=2 coils
     smap = cat(smap...; dims=3) # (dims..., nc)
 #   smap = ones(ComplexF32, nx, ny, 2)
 
-    ydata = reshape(ydata, ig.dims..., 1, :) # (dims..., 1, ne)
-    ydata = smap .* ydata
-
+    ydata = b0model(ftrue, xwtrue, echotime; smap, df, relamp, xf=xftrue)
     ydata .+= 0.01 * randn(ComplexF32, size(ydata))
     ydata, scale = b0scale(ydata, echotime) # todo: make internal to b0map!
 
@@ -80,6 +72,7 @@ end
         order = 1, l2b = -4, # todo
         mask, smap, niter=18, df, track=true, precon=:diag)
 
+    @show maximum(abs, (fhat - ftrue) .* mask)
 #   @test maximum(abs, (fhat - ftrue) .* mask) < 5
 #   @test_throws ErrorException rmse(fhat) < 2 # todo
     @test fhat isa Matrix{Float32}
