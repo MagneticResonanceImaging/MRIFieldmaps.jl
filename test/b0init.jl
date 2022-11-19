@@ -49,3 +49,36 @@ using Test: @test, @testset, @inferred
     f5 = @inferred b0init(ydata, echotime; smap, df=[0f0/u]) # noisy
     @test maximum(abs, f5 - ftrue) < 3/u
 end
+
+
+# water-fat version
+@testset "b0init-wf" begin
+    seed!(0)
+    u = 1s
+    echotime = [0.0015 0.0038 0.0061 0.0084 0.0106 0.0129 0.0152 0.0174]
+    echotime = Float32.(vec(echotime) * 1u) # from PKdata5.mat for 1.5 T
+    ne = length(echotime)
+
+    # multi-species fat model parameters from notes.pdf in
+    # https://www.ismrm.org/workshops/FatWater12/data.htm
+    fieldstrength = 1.5 # Tesla
+    gyro = 42.58 # gyromagnetic ratio in Hz/Tesla
+    df = [-3.80, -3.40, -2.60, -1.94, -0.39, 0.60] *
+        gyro * fieldstrength / 1u # Hz fat shift
+    relamp = [0.087, 0.693, 0.128, 0.004, 0.039, 0.048]
+
+    dims = (10,8)
+    ftrue = 20 * randn(Float32, dims...) / 1u
+    xwtrue = 3 .+ rand(ComplexF32, dims)
+    xftrue = 1 .+ rand(ComplexF32, dims)
+    nc = 2
+    smap = 2 .+ rand(ComplexF32, dims..., nc)
+    ytrue = b0model(ftrue, xwtrue, echotime; smap, df, relamp, xf=xftrue)
+    ydata = ytrue + 0.01f0 * randn(ComplexF32, size(ytrue))
+
+    f6 = @inferred b0init(ytrue, echotime; smap, df, relamp) # noiseless
+    @test maximum(abs, f6 - ftrue) < 3/u
+
+    f7 = @inferred b0init(ydata, echotime; smap, df, relamp) # noisy
+    @test maximum(abs, f7 - ftrue) < 3/u
+end
