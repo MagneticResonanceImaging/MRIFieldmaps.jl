@@ -40,7 +40,7 @@ but internally the code works with `ω = 2π f` (rad/s).
 - `mask (dims...)` logical reconstruction mask; default: `trues(size(finit))`
 - `ninner` # of inner iterations for monotonic line search
   default: `3` inner iterations
-- `threshold::Real = 0` for `b0init()`
+- `b0init_args::NamedTuple = (;)` options for `b0init`, such as `threshold`
 - `niter` # of outer iterations (def: `30`)
 - `order` order of the finite-difference matrix (def: `2`)
 - `l2b` `log2` of regularization parameter (def: `-6`)
@@ -84,14 +84,16 @@ function b0map(
     echotime::Echotime,
     ;
     smap::AbstractArray{<:Complex} = ones(ComplexF32, size(ydata)[1:end-1]),
-    threshold::Real = 0,
-    finit::AbstractArray{<:RealU} = b0init(ydata, echotime; smap, threshold),
+    df::AbstractVector{<:RealU} = Float32[],
+    relamp::AbstractVector{<:RealU} = ones(Float32, size(df)) / max(1, length(df)),
+    b0init_args::NamedTuple = (;),
+    finit::AbstractArray{<:RealU} = b0init(ydata, echotime; smap, df, relamp, b0init_args...),
     kwargs...
 ) where {D}
 
     D < 4 && @warn("D = $D < 4 is appropriate only for 1D MRI")
 
-    (fhat, times, out) = b0map(finit, ydata, echotime; smap, kwargs...)
+    (fhat, times, out) = b0map(finit, ydata, echotime; smap, df, relamp, kwargs...)
     out = merge(out, (; finit))
     return (fhat, times, out)
 end
@@ -167,8 +169,8 @@ function b0map(
     gamma_type::Symbol = :PR,
     precon::Symbol = :ichol,
     reset::Real = Inf,
-    df::AbstractVector{<:RealU} = [0f0],
-    relamp::AbstractVector{<:RealU} = [1f0],
+    df::AbstractVector{<:RealU} = Float32[],
+    relamp::AbstractVector{<:RealU} = ones(Float32, size(df)) / max(1, length(df)),
     chat::Bool = true,
     chat_iter::Int = 10, # progress report this often
     track::Bool = false,
@@ -184,7 +186,8 @@ function b0map(
     np == length(finit) || throw("need finit to have length np=$np")
     (np, nc) == size(smap) || throw("need smap to have size (np,nc)=($np,$nc)")
     count(mask) == np || throw("bad mask count")
-    length(relamp) == length(df) || throw("inconsistent df & relamp")
+    length(relamp) == length(df) ||
+        throw("inconsistent length df $(length(df)) & relamp $(length(relamp))")
 
     # sparse finite-difference regularization matrix (?,np)
     C = vcat(spdiff(size(mask); order)...)
@@ -202,9 +205,10 @@ function b0map(
     angy = angle.(ydata)
     angs = angle.(smap)
     if !iszero(df)
-        # γ in eqn (5) of Lin&Fessler, of size (ne,1+npeak)
+        # γ in eqn (5) of Lin&Fessler, of size (ne,2)
         γwf = [ones(ne) cis.(2f0π*echotime*df') * relamp]
         # Gamma in eqn (4) of Lin&Fessler, of size (ne,ne)
+        # @show cond(γwf)
         Gamma = γwf * inv(γwf'*γwf) * γwf'
     end
 
@@ -230,7 +234,7 @@ function b0map(
                     ang2[:,set,c,d] .= angs[:,c] - angs[:,d] +
                                        angy[:,d,j] - angy[:,c,i]
                     if !iszero(df)
-                        wj_mag[:,set,c,d] .*= abs.(Gamma[i,j])
+                        wj_mag[:,set,c,d] .*= abs(Gamma[i,j])
                         ang2[:,set,c,d] .+= angle(Gamma[i,j])
                     end
                 end
@@ -436,8 +440,8 @@ function decomp(w, relamp, echotime, smap, ydata, γwf)
     (np,nc,ne) = size(ydata)
     x = zeros(ComplexF32, 2, np) # water,fat
     for ip in 1:np
-        B = γwf .* cis.(w[ip] * echotime) # (ne,1+npeak)
-        B = kron(smap[ip,:], B) # (ne*nc,1+npeak) with ne varying fastest
+        B = γwf .* cis.(w[ip] * echotime) # (ne,2)
+        B = kron(smap[ip,:], B) # (ne*nc,2) with ne varying fastest
         yc = transpose(ydata[ip,:,:]) # (nc, ne) -> (ne, nc)
         x[:,ip] .= B \ vec(yc) # (2,)
     end

@@ -25,7 +25,7 @@ end
 
     # multi coil
     nc = 2
-#   smaps = 9 .+ randn(ComplexF32, dims..., nc, ne) # todo
+#   smaps = 9 .+ randn(ComplexF32, dims..., nc, ne)
     ydata = randn(ComplexF32, dims..., nc, ne)
 
     (yscaled, scalefactor) = b0scale(ydata, echotime)
