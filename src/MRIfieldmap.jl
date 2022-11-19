@@ -24,6 +24,7 @@ module MRIfieldmap
     include("b0model.jl")
     include("b0init.jl")
     include("b0scale.jl")
+    include("combine.jl")
     include("b0map.jl")
 
 end # module
