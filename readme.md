@@ -29,6 +29,26 @@ see the
 [documentation](https://jefffessler.github.io/MRIfieldmaps.jl/stable).
 
 
+### Citations
+
+The algorithm in function `b0map`
+for B0 field map estimation is based on the paper:
+C Y Lin, J A Fessler,
+"Efficient Regularized Field Map Estimation in 3D MRI", IEEE TCI 2020
+[http://doi.org/10.1109/TCI.2020.3031082]
+[http://arxiv.org/abs/2005.08661]
+Please cite this paper if you use this method.
+
+The internal algorithm details are a bit different
+(and faster)
+because here we perform coil combination
+before starting the iterations,
+whereas
+[the original Matlab code](https://github.com/ClaireYLin/regularized-field-map-estimation)
+had loops over coils
+within each iteration.
+
+
 ### Compatibility
 
 Tested with Julia ≥ 1.6.
@@ -38,6 +58,7 @@ Tested with Julia ≥ 1.6.
 
 * https://github.com/MagneticResonanceImaging
 
+* https://github.com/ClaireYLin/regularized-field-map-estimation
 
 <!-- URLs -->
 [action-img]: https://github.com/JeffFessler/MRIfieldmaps.jl/workflows/CI/badge.svg
