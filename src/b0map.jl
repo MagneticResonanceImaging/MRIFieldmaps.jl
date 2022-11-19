@@ -4,7 +4,9 @@ using LinearAlgebra: norm, cholesky
 using ImageGeoms: embed
 using SparseArrays: spdiagm, diag
 using LimitedLDLFactorizations: lldl
-#using MRIfieldmaps: spdiff, b0init todo
+#using MRIfieldmaps: spdiff, b0init, coil_combine
+
+export b0map
 
 
 """
@@ -75,6 +77,8 @@ C Y Lin, J A Fessler,
 "Efficient Regularized Field Map Estimation in 3D MRI", IEEE TCI 2020
 http://doi.org/10.1109/TCI.2020.3031082
 http://arxiv.org/abs/2005.08661
+
+Please cite that paper if you use this code.
 """
 b0map
 
@@ -189,6 +193,8 @@ function b0map(
     length(relamp) == length(df) ||
         throw("inconsistent length df $(length(df)) & relamp $(length(relamp))")
 
+    zdata, sos = coil_combine(ydata, smap) # coil combine image data
+
     # sparse finite-difference regularization matrix (?,np)
     C = vcat(spdiff(size(mask); order)...)
 
@@ -201,9 +207,7 @@ function b0map(
     CC = C' * C
 
     # calculate the magnitude and angles used in the data-fit curvatures
-    sjtotal = sum(abs2, smap; dims=2) # (np,1)
-    angy = angle.(ydata)
-    angs = angle.(smap)
+    angz = angle.(zdata)
     if !iszero(df)
         # γ in eqn (5) of Lin&Fessler, of size (ne,2)
         γwf = [ones(ne) cis.(2f0π*echotime*df') * relamp]
@@ -214,37 +218,28 @@ function b0map(
 
     nset = cumsum(1:ne-1)[end]
 
-    wj_mag = zeros(Float32, np, nset, nc, nc)
-    d2 = zeros(eltype(Float32(echotime[1])), 1, nset, 1, 1) # trick
-    ang2 = zeros(Float32, np, nset, nc, nc)
+    wj_mag = zeros(Float32, np, nset)
+    d2 = zeros(eltype(Float32(echotime[1])), 1, nset) # trick
+    ang2 = zeros(Float32, np, nset)
 
     set = 0
 
     # Precompute data-dependent magnitude and phase factors.
-    for j in 1:ne # for each pair of scans: "m,n" in (3) in Lin&Fessler
-        for i in 1:ne
-            (i ≥ j) && continue # only need one pair of differences
-            set += 1
-            d2[set] = echotime[i] - echotime[j]
-            for c in 1:nc
-                for d in 1:nc
-                    wj_mag[:,set,c,d] .= abs.(smap[:,c] .* conj(smap[:,d]) .*
-                        conj(ydata[:,c,i]) .* ydata[:,d,j])
-                    # difference of the echo times and angles
-                    ang2[:,set,c,d] .= angs[:,c] - angs[:,d] +
-                                       angy[:,d,j] - angy[:,c,i]
-                    if !iszero(df)
-                        wj_mag[:,set,c,d] .*= abs(Gamma[i,j])
-                        ang2[:,set,c,d] .+= angle(Gamma[i,j])
-                    end
-                end
-            end
+    for j in 1:ne, i in 1:ne # for each pair of scans: "m,n" in (3) in Lin&Fessler
+        (i ≥ j) && continue # only need one pair of differences
+        set += 1
+        d2[set] = echotime[i] - echotime[j]
+        wj_mag[:,set] .= abs.(zdata[:,i] .* zdata[:,j])
+        # difference of the echo times and angles
+        ang2[:,set] .= angz[:,j] - angz[:,i]
+        if !iszero(df)
+            wj_mag[:,set] .*= abs(Gamma[i,j])
+            ang2[:,set] .+= angle(Gamma[i,j])
         end
     end
 
-    # compute |s_c s_d' y_dj' y_ci| /L/s * (tj - ti)^2
-    sjtotal[sjtotal .== 0] .= 1 # avoid outside mask = 0
-    wj_mag ./= sjtotal
+    # compute |y_dj' y_ci| /L/s * (tj - ti)^2
+    wj_mag .*= sos
     if iszero(df)
         wj_mag ./= ne # eqn. (4) in paper for non-fat case
     end
@@ -292,7 +287,7 @@ function b0map(
         ngrad = -grad
 
         if track
-            costs[iter] = sum(wj_mag .* (1 .- cos.(sm))) + 0.5 * norm(C*w)^2
+            costs[iter] = sum(@. wj_mag * (1 - cos(sm))) + 0.5 * norm(C*w)^2
             chat && @info "iter $(iter-1), cost $(costs[iter])"
         end
 
@@ -407,7 +402,7 @@ function b0map(
     if track
         sm = w * vec(d2)' .+ ang2
     #   (_, _, sm) = Adercurv(d2, ang2, wm_deltaD, wm_deltaD2, w)
-        costs[niter+1] = sum(wj_mag .* (1 .- cos.(sm))) + 0.5 * norm(C*w)^2
+        costs[niter+1] = sum(@. wj_mag * (1 - cos(sm))) + 0.5 * norm(C*w)^2
     #   chat && @info ' ite: %d , cost: %f3\n', iter, cost(iter+1))
         out = (fhats = out_fs, costs)
     else
@@ -416,7 +411,7 @@ function b0map(
 
     # output water & fat images
     if !iszero(df)
-        x = decomp(w, relamp, echotime, smap, ydata, γwf)
+        x = decomp(w, relamp, echotime, zdata, γwf)
         out = merge(out, (xw = x[1,:], xf = x[2,:]))
     end
 
@@ -426,24 +421,22 @@ end
 
 # compute the data-fit derivatives and curvatures as in Funai 2008 paper
 function Adercurv(d2, ang2, wm_deltaD, wm_deltaD2, w)
-    sm = w * vec(d2)' .+ ang2 # (np, ne, nc, nc)
-    tmp = wm_deltaD .* sin.(sm) # (np, ne, nc, nc)
-    hderiv = 2 * sum(wm_deltaD .* sin.(sm); dims = 2:4)
+    sm = w * vec(d2)' .+ ang2 # (np, ne)
+    tmp = wm_deltaD .* sin.(sm) # (np, ne)
+    hderiv = 2 * sum(@. wm_deltaD * sin(sm); dims = 2)
     srm = @. mod2pi(sm + π) - π
-    hcurv = 2 * sum(wm_deltaD2 .* sinc.(srm); dims = 2:4)
+    hcurv = 2 * sum(@. wm_deltaD2 * sinc(srm); dims = 2)
     return (vec(hderiv), vec(hcurv), sm)
 end
 
 
 # eqn (7) of Lin&Fessler
-function decomp(w, relamp, echotime, smap, ydata, γwf)
-    (np,nc,ne) = size(ydata)
+function decomp(w, relamp, echotime, zdata, γwf)
+    (np,ne) = size(zdata)
     x = zeros(ComplexF32, 2, np) # water,fat
     for ip in 1:np
-        B = γwf .* cis.(w[ip] * echotime) # (ne,2)
-        B = kron(smap[ip,:], B) # (ne*nc,2) with ne varying fastest
-        yc = transpose(ydata[ip,:,:]) # (nc, ne) -> (ne, nc)
-        x[:,ip] .= B \ vec(yc) # (2,)
+        B = @. γwf * cis(w[ip] * echotime) # (ne,2)
+        x[:,ip] .= B \ zdata[ip,:] # (2,)
     end
     return x
 end
