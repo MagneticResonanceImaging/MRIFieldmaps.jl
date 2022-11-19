@@ -38,9 +38,12 @@ then perform discrete maximum-likelihood estimation using `fdict`.
 # Options for water-fat case:
 - `df` Δf values in water-fat imaging (def: `[]`) units Hz, e.g., `[440]` at 3T
 - `relamp` relative amplitudes in multi-species water-fat (def: `[]`)
-- `fband` frequency bandwidth for `fdict; default `floor(1 / minimum(echo time spacing))`
-- `nf` number of discrete frequencies to try; default `1+floor(fband)` so ≈1Hz spacing
-- `fdict` "dictionary" of discrete frequency values to try; default `LinRange(-1/2,1/2,nf) * fband`
+- `fband` frequency bandwidth for `fdict;
+  default `floor(1 / minimum(echo time spacing))`
+- `nf` number of discrete frequencies to try;
+  default `1+floor(fband)` so ≈1Hz spacing
+- `fdict` "dictionary" of discrete frequency values to try;
+  default `LinRange(-1/2,1/2,nf) * fband`
 
 # Out
 - `finit` initial B0 fieldmap estimate in Hz
@@ -71,22 +74,20 @@ function b0init(
     ne == length(echotime) || throw("need echotime to have length ne=$ne")
     ne ≥ 2 || throw("need ne=$ne ≥ 2")
 
-    # coil combine image data
-    yc = sum(conj(smap) .* ydata; dims=ndim+1) # coil combine
-    yc = selectdim(yc, ndim+1, 1) # (dims..., ne)
+    zdata, _ = coil_combine(ydata, smap) # coil combine image data
 
     if isempty(df) # use phase difference of first two echo times
-        y1 = selectdim(yc, ndim+1, 1)
-        y2 = selectdim(yc, ndim+1, 2)
+        y1 = selectdim(zdata, ndim+1, 1)
+        y2 = selectdim(zdata, ndim+1, 2)
         finit = angle.(y2 .* conj(y1)) / Float32((echotime[2] - echotime[1]) * 2π)
-    else # use discrete maximum-likelihood search
-        finit = b0init(reshape(yc,:,ne), echotime, df, relamp; kwargs...) # water-fat version
+    else # use discrete maximum-likelihood search, typically for water-fat version
+        finit = b0init(reshape(zdata,:,ne), echotime, df, relamp; kwargs...)
         finit = reshape(finit, dims)
     end
 
     # set background pixels to mean of "good" pixels.
     if threshold > 0
-        y1 = selectdim(yc, ndim+1, 1)
+        y1 = selectdim(zdata, ndim+1, 1)
         mag1 = abs.(y1)
         good = mag1 .> (threshold * maximum(mag1))
         finit[.!good] .= sum(finit[good]) / count(good) # mean
