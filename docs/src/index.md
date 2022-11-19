@@ -1,13 +1,13 @@
 ```@meta
-CurrentModule = MRIfieldmap
+CurrentModule = MRIfieldmaps
 ```
 
-# MRIfieldmap.jl Documentation
+# MRIfieldmaps.jl Documentation
 
 ## Overview
 
 This Julia package
-[(MRIfieldmap)](https://github.com/JeffFessler/MRIfieldmap.jl)
+[(MRIfieldmaps)](https://github.com/JeffFessler/MRIfieldmaps.jl)
 provides tools
 for estimating fieldmaps in MRI.
 

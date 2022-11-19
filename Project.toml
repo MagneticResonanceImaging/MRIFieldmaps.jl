@@ -1,4 +1,4 @@
-name = "MRIfieldmap"
+name = "MRIfieldmaps"
 uuid = "5af58b90-8a55-4daf-adb4-2008a66a38cf"
 authors = ["Jeff Fessler <fessler@umich.edu> and others"]
 version = "0.0.1"

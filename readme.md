@@ -1,6 +1,6 @@
 # MRIfieldmap
 
-https://github.com/JeffFessler/MRIfieldmap.jl
+https://github.com/JeffFessler/MRIfieldmaps.jl
 
 
 [![action status][action-img]][action-url]
@@ -18,7 +18,7 @@ for regularized estimation of fieldmaps in MRI.
 
 ```julia
 using Pkg
-Pkg.add("MRIfieldmap")
+Pkg.add("MRIfieldmaps")
 ```
 
 
@@ -26,7 +26,7 @@ Pkg.add("MRIfieldmap")
 
 For examples,
 see the
-[documentation](https://jefffessler.github.io/MRIfieldmap.jl/stable).
+[documentation](https://jefffessler.github.io/MRIfieldmaps.jl/stable).
 
 
 ### Compatibility
@@ -40,17 +40,17 @@ Tested with Julia ≥ 1.6.
 
 
 <!-- URLs -->
-[action-img]: https://github.com/JeffFessler/MRIfieldmap.jl/workflows/CI/badge.svg
-[action-url]: https://github.com/JeffFessler/MRIfieldmap.jl/actions
-[build-img]: https://github.com/JeffFessler/MRIfieldmap.jl/workflows/CI/badge.svg?branch=main
-[build-url]: https://github.com/JeffFessler/MRIfieldmap.jl/actions?query=workflow%3ACI+branch%3Amain
+[action-img]: https://github.com/JeffFessler/MRIfieldmaps.jl/workflows/CI/badge.svg
+[action-url]: https://github.com/JeffFessler/MRIfieldmaps.jl/actions
+[build-img]: https://github.com/JeffFessler/MRIfieldmaps.jl/workflows/CI/badge.svg?branch=main
+[build-url]: https://github.com/JeffFessler/MRIfieldmaps.jl/actions?query=workflow%3ACI+branch%3Amain
 [code-blue-img]: https://img.shields.io/badge/code%20style-blue-4495d1.svg
 [code-blue-url]: https://github.com/invenia/BlueStyle
-[codecov-img]: https://codecov.io/github/JeffFessler/MRIfieldmap.jl/coverage.svg?branch=main
-[codecov-url]: https://codecov.io/github/JeffFessler/MRIfieldmap.jl?branch=main
+[codecov-img]: https://codecov.io/github/JeffFessler/MRIfieldmaps.jl/coverage.svg?branch=main
+[codecov-url]: https://codecov.io/github/JeffFessler/MRIfieldmaps.jl?branch=main
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[docs-stable-url]: https://JeffFessler.github.io/MRIfieldmap.jl/stable
+[docs-stable-url]: https://JeffFessler.github.io/MRIfieldmaps.jl/stable
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
-[docs-dev-url]: https://JeffFessler.github.io/MRIfieldmap.jl/dev
+[docs-dev-url]: https://JeffFessler.github.io/MRIfieldmaps.jl/dev
 [license-img]: http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat
 [license-url]: LICENSE

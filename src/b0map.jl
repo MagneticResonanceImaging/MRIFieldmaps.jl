@@ -4,7 +4,7 @@ using LinearAlgebra: norm, cholesky
 using ImageGeoms: embed
 using SparseArrays: spdiagm, diag
 using LimitedLDLFactorizations: lldl
-using MRIfieldmap: spdiff
+#using MRIfieldmaps: spdiff, b0init todo
 
 
 """

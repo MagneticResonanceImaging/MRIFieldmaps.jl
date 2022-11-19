@@ -1,6 +1,6 @@
 # test/b0map-wf.jl (B0 fieldmap in water/fat separation case)
 
-using MRIfieldmap: b0map, b0model, b0init, b0scale
+using MRIfieldmaps: b0map, b0model, b0init, b0scale
 using Test: @test, @testset, @test_throws, @inferred
 #using Unitful: s # lldl does not support units
 using ImageGeoms: ImageGeom, circle

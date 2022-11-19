@@ -1,10 +1,10 @@
 #---------------------------------------------------------
-# # [MRIfieldmap overview](@id 01-overview)
+# # [MRIfieldmaps overview](@id 01-overview)
 #---------------------------------------------------------
 
 #=
 This page summarizes the Julia package
-[`MRIfieldmap`](https://github.com/JeffFessler/MRIfieldmap.jl).
+[`MRIfieldmaps`](https://github.com/JeffFessler/MRIfieldmaps.jl).
 
 This page was generated from a single Julia file:
 [01-overview.jl](@__REPO_ROOT_URL__/01-overview.jl).
@@ -25,7 +25,7 @@ This page was generated from a single Julia file:
 
 # Packages needed here.
 
-using MRIfieldmap: spdiff
+using MRIfieldmaps: spdiff
 using MIRTjim: jim, prompt; jim(:prompt, true)
 using InteractiveUtils: versioninfo
 

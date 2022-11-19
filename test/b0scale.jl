@@ -1,6 +1,6 @@
 # test/b0scale.jl
 
-using MRIfieldmap: b0scale, div0
+using MRIfieldmaps: b0scale, div0
 using Test: @test, @testset, @inferred
 using Unitful: s
 

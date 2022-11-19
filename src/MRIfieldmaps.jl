@@ -1,13 +1,13 @@
 """
-    MRIfieldmap
-Module `MRIfieldmap` exports methods for fieldmap estimation.
+    MRIfieldmaps
+Module `MRIfieldmaps` exports methods for fieldmap estimation.
 """
-module MRIfieldmap
+module MRIfieldmaps
 
     """
         RealU
     A data type that is just `Number`
-    but is to be thought of as `Union{Real, Unitful.Length}`
+    but is to be thought of as `Union{Real, Unitful}`
     without needing a dependence on the `Unitful` package.
     """
     const RealU = Number # Union{Real, Unitful.Length}

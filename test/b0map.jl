@@ -1,6 +1,6 @@
 # test/b0map.jl
 
-using MRIfieldmap: b0map, b0scale, b0model
+using MRIfieldmaps: b0map, b0scale, b0model
 using Test: @test, @testset, @test_throws, @inferred
 using Unitful: s
 using ImageGeoms: ImageGeom, circle
