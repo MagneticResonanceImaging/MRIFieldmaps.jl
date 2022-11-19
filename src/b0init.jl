@@ -38,8 +38,8 @@ then perform discrete maximum-likelihood estimation using `fdict`.
 # Options for water-fat case:
 - `df` Δf values in water-fat imaging (def: `[]`) units Hz, e.g., `[440]` at 3T
 - `relamp` relative amplitudes in multi-species water-fat (def: `[]`)
-- `fband` frequency bandwith for `fdict; default 1 / minimum(echo time spacing)
-- `nf` number of discrete frequencies to try; default 101
+- `fband` frequency bandwidth for `fdict; default `floor(1 / minimum(echo time spacing))`
+- `nf` number of discrete frequencies to try; default `1+floor(fband)` so ≈1Hz spacing
 - `fdict` "dictionary" of discrete frequency values to try; default `LinRange(-1/2,1/2,nf) * fband`
 
 # Out
@@ -99,14 +99,14 @@ end
 # discrete maximum-likelihood approach
 function b0init(
     ydata::AbstractMatrix{<:Complex}, # coil combined (*dim,ne)
-    echotime::Echotime,
+    echotime::Echotime{Te},
     df::AbstractVector{<:RealU},
     relamp::AbstractVector{<:RealU},
     ;
-    fband::RealU = 1 / minimum(diff(sort(echotime))),
-    nf::Int = 101,
+    fband::RealU = floor(oneunit(Te) / minimum(diff(sort(echotime)))) / oneunit(Te),
+    nf::Int = 1 + floor(Int, fband * oneunit(Te)),
     fdict::AbstractVector{<:RealU} = Float32.(LinRange(-0.5,0.5,nf) * fband),
-)
+) where {Te <: RealU}
 
     Base.require_one_based_indexing(df, echotime, fdict, relamp, ydata)
 
