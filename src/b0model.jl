@@ -25,7 +25,7 @@ Field map estimation from multiple (`ne ≥ 2`) echo-time images,
 - `xw (dims)` fat magnetization component, default `zeros(size(fmap))`
 - `df` Δf values in water-fat imaging (def: `[0]`) units Hz, e.g., `[440]` at 3T
 - `relamp` relative amplitudes in multi-peak water-fat (def: `[1]`)
-- `relax (dims)` R2 or R2* relaxation in same units as `fmap`
+- `relax (dims)` R2* relaxation in same units as `fmap`, i.e., 1/s
 
 # Out
 - `ydata (dims..., [nc,] ne)` `ne` sets of complex images for `nc` coils

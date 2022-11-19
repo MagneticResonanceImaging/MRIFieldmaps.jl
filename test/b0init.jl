@@ -1,6 +1,6 @@
 # test/b0init.jl
 
-using MRIfieldmap: b0init
+using MRIfieldmap: b0init, b0model
 using Random: seed!
 using Unitful: s
 using Test: @test, @testset, @inferred
@@ -15,10 +15,8 @@ using Test: @test, @testset, @inferred
     # single coil
 
     ftrue = 20 * randn(Float32, dims...) / 1u
-    xtrue = 2 + rand(ComplexF32)
-    ydata = [xtrue .* cis.(2f0π * ftrue * ΔTE) for ΔTE in echotime]
-    ytrue = cat(dims=3, ydata...)
-    ytrue = reshape(ytrue, dims..., 1, ne) # nc required by b0init!
+    xtrue = 2 .+ rand(ComplexF32, dims)
+    ytrue = b0model(ftrue, xtrue, echotime)
     ydata = ytrue + 0.01f0 * randn(ComplexF32, size(ytrue))
 
     f0 = @inferred b0init(ytrue, echotime)
@@ -29,12 +27,12 @@ using Test: @test, @testset, @inferred
     @test f1*u isa Array{Float32}
     @test maximum(abs, f1 - ftrue) < 2/u
 
+
     # multi coil
 
     nc = 2
-    ytrue = reshape(ytrue, dims..., 1, :) # (dims..., 1, ne)
     smap = 9 .+ randn(ComplexF32, dims..., nc)
-    ytrue = smap .* ytrue
+    ytrue = b0model(ftrue, xtrue, echotime; smap)
     ydata = ytrue + 0.01f0 * randn(ComplexF32, size(ytrue))
 
     f2 = @inferred b0init(ytrue, echotime; smap)
@@ -43,4 +41,11 @@ using Test: @test, @testset, @inferred
     f3 = @inferred b0init(ydata, echotime; smap)
     @test maximum(abs, f3 - ftrue) < 1/u
     @test f3*u isa Array{Float32}
+
+    # discrete search approach
+
+    f4 = @inferred b0init(ytrue, echotime; smap, df=[0f0/u], nf=201)
+    @test maximum(abs, f4 - ftrue) < 2/u # due to quantization error
+    f5 = @inferred b0init(ydata, echotime; smap, df=[0f0/u]) # noisy
+    @test maximum(abs, f5 - ftrue) < 3/u
 end
