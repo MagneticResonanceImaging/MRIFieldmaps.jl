@@ -33,7 +33,7 @@ then perform discrete maximum-likelihood estimation using `fdict`.
 - `smap (dims..., nc)` complex coil maps; default ones
 - `threshold` set `finit` values where `|y1| < threshold * max(|y1|)`
    to the mean of the "good" values where `|y1| ≥ threshold * max(|y1|)`.
-   default: `0`
+   default: `0.1`
 
 # Options for water-fat case:
 - `df` Δf values in water-fat imaging (def: `[]`) units Hz, e.g., `[440]` at 3T
@@ -50,7 +50,7 @@ function b0init(
     echotime::Echotime{Te},
     ;
     smap::AbstractArray{<:Complex} = ones(ComplexF32, size(ydata)[1:end-1]),
-    threshold::Real = 0,
+    threshold::Real = 0.1,
     df::AbstractVector{<:RealU} = Float32[],
     relamp::AbstractVector{<:RealU} = ones(Float32, size(df)) / max(1, length(df)),
     T::DataType = eltype(1 / oneunit(Te)),
@@ -75,18 +75,18 @@ function b0init(
     yc = sum(conj(smap) .* ydata; dims=ndim+1) # coil combine
     yc = selectdim(yc, ndim+1, 1) # (dims..., ne)
 
-    # initial fieldmap via phase difference of first two echo times
-    if !isempty(df)
-        finit = b0init(reshape(yc,:,ne), echotime, df, relamp; kwargs...) # water-fat version
-        finit = reshape(finit, dims)
-    else
+    if isempty(df) # use phase difference of first two echo times
         y1 = selectdim(yc, ndim+1, 1)
         y2 = selectdim(yc, ndim+1, 2)
         finit = angle.(y2 .* conj(y1)) / Float32((echotime[2] - echotime[1]) * 2π)
+    else # use discrete maximum-likelihood search
+        finit = b0init(reshape(yc,:,ne), echotime, df, relamp; kwargs...) # water-fat version
+        finit = reshape(finit, dims)
     end
 
     # set background pixels to mean of "good" pixels.
     if threshold > 0
+        y1 = selectdim(yc, ndim+1, 1)
         mag1 = abs.(y1)
         good = mag1 .> (threshold * maximum(mag1))
         finit[.!good] .= sum(finit[good]) / count(good) # mean
