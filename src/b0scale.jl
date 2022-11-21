@@ -13,7 +13,7 @@ end
 
 
 """
-    (ydata, scalefactor) = b0scale(ydata, echotime; fmax, dmax)
+    (ydata, scalefactor) = b0scale(ydata, echotime; dmax)
 
 Scale complex images `ydata` to account for R2* effects
 and for magnitude variations
@@ -47,7 +47,6 @@ function b0scale(
     ydata::AbstractArray{<:Complex},
     echotime::Union{AbstractVector{Te}, NTuple{N,Te} where N},
     ;
-#   fmax::Real = 0.1,
     dmax::Real = 0.1,
 ) where Te <: RealU
 
@@ -58,20 +57,6 @@ function b0scale(
 
     (nn, ne) = size(ydata)
     echotime = echotime / oneunit(eltype(echotime)) # units are irrelevant here
-
-#=
-    # Scale by median of first set of data to get rid of large mag_j effects.
-    # (Not actually needed, but retained for consistency.)
-
-    if fmax > 0
-        y1 = abs.(ydata[:,1])
-        scalefactor = median(filter(>(fmax * maximum(y1)), y1))
-        scalefactor == 0 && throw("median is zero?")
-        ydata ./= scalefactor
-    else
-        scalefactor = 1
-    end
-=#
 
     # Try to compensate for R2 effects on effective regularization.
     # This uses eqn (15) of Funai&Fessler, with the numerator of (9):
