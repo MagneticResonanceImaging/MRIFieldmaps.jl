@@ -216,35 +216,31 @@ function b0map(
         Gamma = γwf * inv(γwf'*γwf) * γwf'
     end
 
-    nset = cumsum(1:ne-1)[end]
-
+    # Precompute data-dependent magnitude and phase factors.
+    nset = ne * (ne-1) ÷ 2 # "half" of ne × ne double sum
     wj_mag = zeros(Float32, np, nset)
     d2 = zeros(eltype(Float32(echotime[1])), 1, nset) # trick
     ang2 = zeros(Float32, np, nset)
-
     set = 0
-
-    # Precompute data-dependent magnitude and phase factors.
-    for j in 1:ne, i in 1:ne # for each pair of scans: "m,n" in (3) in Lin&Fessler
-        (i ≥ j) && continue # only need one pair of differences
+    for j in 2:ne, i in 1:(j-1) # for each pair of scans: "m,n" in (3) in Lin&Fessler
         set += 1
         d2[set] = echotime[i] - echotime[j]
-        wj_mag[:,set] .= abs.(zdata[:,i] .* zdata[:,j])
+        @. wj_mag[:,set] = abs(zdata[:,i] * zdata[:,j])
         # difference of the echo times and angles
-        ang2[:,set] .= angz[:,j] - angz[:,i]
-        if !iszero(df)
+        @. ang2[:,set] = angz[:,j] - angz[:,i]
+        # Γ effect:
+        if iszero(df) # no fat
+             wj_mag[:,set] ./= ne # eqn. (4) in paper for non-fat case
+        else
             wj_mag[:,set] .*= abs(Gamma[i,j])
             ang2[:,set] .+= angle(Gamma[i,j])
         end
     end
 
-    # compute |y_dj' y_ci| /L/s * (tj - ti)^2
+    # apply s_j^2 and (t_l - t_l')
     wj_mag .*= sos
-    if iszero(df)
-        wj_mag ./= ne # eqn. (4) in paper for non-fat case
-    end
-    wm_deltaD = wj_mag .* d2
-    wm_deltaD2 = wj_mag .* abs2.(d2)
+    wm_deltaD = wj_mag .* d2 # for derivative
+    wm_deltaD2 = wj_mag .* abs2.(d2) # for curvature bound
 
     # prepare output variables
     times = zeros(niter+1)
@@ -254,8 +250,8 @@ function b0map(
         costs = zeros(niter+1)
 
 #=
-        sm = w * vec(d2)' .+ ang2 # (np, ne, nc, nc)
-        cost0d = sum(wj_mag .* (1 .- cos.(sm)))
+        sm = w * d2' .+ ang2 # (np, ne)
+        cost0d = sum(@. wj_mag * (1 - cos(sm)))
         cost0r = 0.5 * norm(C*w)^2
         cost0 = cost0d + cost0r
 =#
@@ -309,6 +305,7 @@ function b0map(
 
         elseif precon === :ichol
             H = spdiagm(hcurv) + CC
+            # todo: reinterpret for units
             PI = lldl(H; lldl_args...)
             npregrad = PI \ ngrad
 
@@ -422,10 +419,10 @@ end
 # compute the data-fit derivatives and curvatures as in Funai 2008 paper
 function Adercurv(d2, ang2, wm_deltaD, wm_deltaD2, w)
     sm = w * vec(d2)' .+ ang2 # (np, ne)
-    tmp = wm_deltaD .* sin.(sm) # (np, ne)
-    hderiv = 2 * sum(@. wm_deltaD * sin(sm); dims = 2)
+#   tmp = wm_deltaD .* sin.(sm)
+    hderiv = sum(@. wm_deltaD * sin(sm); dims = 2) # (np, ne) -> (np,1)
     srm = @. mod2pi(sm + π) - π
-    hcurv = 2 * sum(@. wm_deltaD2 * sinc(srm); dims = 2)
+    hcurv = sum(@. wm_deltaD2 * sinc(srm); dims = 2)
     return (vec(hderiv), vec(hcurv), sm)
 end
 
