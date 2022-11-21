@@ -85,15 +85,15 @@ b0map
 
 function b0map(
     ydata::Array{<:Complex, D},
-    echotime::Echotime,
+    echotime::Echotime{Te},
     ;
     smap::AbstractArray{<:Complex} = ones(ComplexF32, size(ydata)[1:end-1]),
-    df::AbstractVector{<:RealU} = Float32[],
+    df::AbstractVector{<:RealU} = eltype(1/oneunit(Te))[],
     relamp::AbstractVector{<:RealU} = ones(Float32, size(df)) / max(1, length(df)),
     b0init_args::NamedTuple = (;),
     finit::AbstractArray{<:RealU} = b0init(ydata, echotime; smap, df, relamp, b0init_args...),
     kwargs...
-) where {D}
+) where {D, Te <: RealU}
 
     D < 4 && @warn("D = $D < 4 is appropriate only for 1D MRI")
 
@@ -175,7 +175,7 @@ function b0map(
     gamma_type::Symbol = :PR,
     precon::Symbol = :ichol,
     reset::Real = Inf,
-    df::AbstractVector{<:RealU} = Float32[],
+    df::AbstractVector{<:RealU} = eltype(finit)[],
     relamp::AbstractVector{<:RealU} = ones(Float32, size(df)) / max(1, length(df)),
     chat::Bool = true,
     chat_iter::Int = 10, # progress report this often
@@ -185,6 +185,17 @@ function b0map(
 
     Base.require_one_based_indexing(df, echotime, finit, mask, relamp, sos, zdata)
     t0 = time() # start timer
+
+    units = oneunit(eltype(finit)) # could be 1Hz or 1
+    if precon === :ichol || # lldl does not support units :(
+        precon === :chol # https://github.com/JuliaLang/julia/issues/47655
+        finit = finit / units
+        df = df / units
+        echotime = echotime * units
+        fixunits = units
+    else
+        fixunits = 1
+    end
 
     # check dimensions
     (np, ne) = size(zdata)
@@ -246,7 +257,7 @@ function b0map(
     # prepare output variables
     times = zeros(niter+1)
     if track
-        out_fs = zeros(length(finit), niter+1)
+        out_fs = zeros(eltype(finit), length(finit), niter+1)
         out_fs[:,1] .= finit
         costs = zeros(niter+1)
 
@@ -259,8 +270,7 @@ function b0map(
     end
 
     if precon === :diag
-        dCC = diag(CC)
-        dCC = Vector{Float32}(dCC)
+        dCC = Float32.(diag(CC))
     end
 
     # initialize NCG variables
@@ -291,7 +301,7 @@ function b0map(
         # apply preconditioner
 
         if precon === :I
-            npregrad = ngrad
+            npregrad = ngrad * units^2 # note: crucial for unit balance!
 
         elseif precon === :diag
             H = hcurv + dCC
@@ -343,7 +353,7 @@ function b0map(
         oldinprod = newinprod
 
         # check if correct descent direction
-        if ddir' * grad > 0
+        if sign(ddir' * grad) > 0
             if !warned_dir
                 warned_dir = true
                 @warn "wrong direction so resetting"
@@ -364,16 +374,17 @@ function b0map(
         for is in 1:ninner
 
             # compute the curvature and derivative for subsequent steps
-            if step != 0
-                (hderiv,hcurv) = Adercurv(d2, ang2, wm_deltaD, wm_deltaD2, w + step * ddir)
+            if !iszero(step)
+                tmp = w + step * ddir
+                (hderiv,hcurv) = Adercurv(d2, ang2, wm_deltaD, wm_deltaD2, tmp)
             end
 
             # compute numer and denom of the Huber's algorithm based line search
             denom = abs2.(ddir)' * hcurv + CdCd
-            numer = ddir' * hderiv + (CdCw + step * CdCd);
+            numer = ddir' * hderiv + (CdCw + step * CdCd)
 
-            step = denom == 0 ? 0 : step - numer / denom # update line search
-            step == 0 && @warn "found exact solution??? step=0 now!?"
+            step = iszero(denom) ? step0 : step - numer / denom # update line search
+            iszero(step) && @warn "found exact solution??? step=0 now!?"
         end
 
         # update the estimate and the finite differences of the estimate
@@ -396,7 +407,7 @@ function b0map(
     #   (_, _, sm) = Adercurv(d2, ang2, wm_deltaD, wm_deltaD2, w)
         costs[niter+1] = sum(@. wj_mag * (1 - cos(sm))) + 0.5 * norm(C*w)^2
     #   chat && @info ' ite: %d , cost: %f3\n', iter, cost(iter+1))
-        out = (fhats = out_fs, costs)
+        out = (fhats = out_fs * fixunits, costs)
     else
         out = (; )
     end
@@ -407,7 +418,7 @@ function b0map(
         out = merge(out, (xw = x[1,:], xf = x[2,:]))
     end
 
-    return w / 2f0π, times, out # return Hz
+    return w * (fixunits / 2f0π), times, out # return Hz
 end
 
 
