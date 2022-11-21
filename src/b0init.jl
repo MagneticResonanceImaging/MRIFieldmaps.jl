@@ -131,8 +131,7 @@ function b0init(
     d2 = zeros(eltype(echotime), nset)
     ang2 = zeros(Float32, np, nset)
 
-    for j in 1:ne, i in 1:ne # for each pair of echo times
-        i ≥ j && continue # only need one of each pair of differences
+    for j in 2:ne, i in 1:(j-1) # for each unique pair of echo times
         set += 1
         d2[set] = echotime[i] - echotime[j]
         @. wj_mag[:,set] = abs(ydata[:,i] * ydata[:,j])
