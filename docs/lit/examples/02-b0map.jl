@@ -112,7 +112,7 @@ image_power = 10 * log10(sum(abs2, mag) / (nx*ny*nz)) # in dB
 noise_power = image_power - p.snr
 noise_std = sqrt(10^(noise_power/10)) / 2 # because complex
 ynoise = Float32(noise_std) * randn(ComplexF32, size(ytrue))
-ydata = ytrue + ynoise # add the noise to the data
+ydata = ytrue + ynoise; # add the noise to the data
 # compute the SNR for each echo time to verify
 tmp = [sum(abs2, ytrue[:,:,:,:,i]) / sum(abs2, ynoise[:,:,:,:,i]) for i in 1:ne]
 snr = 10 * log10.(tmp)
@@ -120,7 +120,7 @@ snr = 10 * log10.(tmp)
 jim(ydata[:,:,:,:,end], "|data|"; ncol=nz÷2)
 
 
-# coil combine ydata data and scale
+# Coil combine ydata data and scale
 if !@isdefined(yik_sos)
     yik_sos = sum(conj(smap) .* ydata; dims=4) # coil combine
     yik_sos = yik_sos[:,:,:,1,:] # (dims..., ne)
@@ -133,18 +133,15 @@ end
 
 # Initialize fieldmap (finit)
 # phase difference of first two echo times (no smoothing):
-if !@isdefined(finit)
-    flim = (-100,100) # display range in Hz
-    finit = b0init(ydata, p.echotime; smap, threshold = p.yk_thresh)
-    jim(finit .* mask; clim=flim, title="Initial fieldmap in Hz (Fig 3b)",
-        xlabel = "RMSE = $(frmse(finit)) Hz")
-end
-
-yik_scale = ydata / scale
+flim = (-100,100) # display range in Hz
+finit = b0init(ydata, p.echotime; smap, threshold = p.yk_thresh)
+jim(finit .* mask; clim=flim, title="Initial fieldmap in Hz (Fig 3b)",
+    xlabel = "RMSE = $(frmse(finit)) Hz")
 
 #src # QM-Huber / NCG for 3D fieldmap estimation
 
 # Run each algorithm twice; once to track rmse and costs, once for timing
+yik_scale = ydata / scale;
 fmap_run = (niter, precon, track; kwargs...) ->
     b0map(yik_scale, p.echotime; smap, mask, # threshold = p.yk_thresh,
        order=1, l2b=-4, gamma_type=:PR, niter, precon, track, kwargs...)
@@ -211,3 +208,11 @@ fun(time_cg_n, fhat_cg_n, "None")
 fun(time_cg_d, fhat_cg_d, "Diag")
 fun(time_cg_c, fhat_cg_c, "Chol")
 fun(time_cg_i, fhat_cg_i, "IC")
+
+#=
+That final figure is similar to Fig. 4 of the 2020 Lin&Fessler paper.
+Interestingly,
+it seems that in this Julia implementation
+the diagonal preconditioner
+is as effective as the incomplete Cholesky preconditioner.
+=#
