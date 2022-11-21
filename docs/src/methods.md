@@ -6,5 +6,5 @@
 ## Methods usage
 
 ```@autodocs
-Modules = [MRIfieldmap]
+Modules = [MRIfieldmaps]
 ```

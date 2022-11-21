@@ -1,6 +1,6 @@
 execute = isempty(ARGS) || ARGS[1] == "run"
 
-org, reps = :JeffFessler, :MRIfieldmap
+org, reps = :JeffFessler, :MRIfieldmaps
 eval(:(using $reps))
 using Documenter
 using Literate
@@ -70,7 +70,7 @@ if isci
         devurl = "dev",
         versions = ["stable" => "v^", "dev" => "dev"],
         forcepush = true,
-#       push_preview = true,
+        push_preview = true,
         # see https://$org.github.io/$repo.jl/previews/PR##
     )
 end

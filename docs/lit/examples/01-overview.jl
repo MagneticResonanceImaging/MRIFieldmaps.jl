@@ -1,10 +1,10 @@
 #---------------------------------------------------------
-# # [MRIfieldmap overview](@id 01-overview)
+# # [MRIfieldmaps overview](@id 01-overview)
 #---------------------------------------------------------
 
 #=
 This page summarizes the Julia package
-[`MRIfieldmap`](https://github.com/JeffFessler/MRIfieldmap.jl).
+[`MRIfieldmaps`](https://github.com/JeffFessler/MRIfieldmaps.jl).
 
 This page was generated from a single Julia file:
 [01-overview.jl](@__REPO_ROOT_URL__/01-overview.jl).
@@ -21,11 +21,16 @@ This page was generated from a single Julia file:
 #md # [`01-overview.ipynb`](@__BINDER_ROOT_URL__/01-overview.ipynb).
 
 
-# ### Setup
+#=
+### Setup
 
-# Packages needed here.
+Packages needed here.
+Use `Pkg.add` as illustrated
+[here](https://juliaimagerecon.github.io/Examples/generated/mri/1-nufft)
+when using a package for the first time.
+=#
 
-using MRIfieldmap: spdiff
+using MRIfieldmaps: spdiff
 using MIRTjim: jim, prompt; jim(:prompt, true)
 using InteractiveUtils: versioninfo
 
@@ -49,7 +54,8 @@ A future extension could support B1+ map estimation.
 
 
 #=
-### Regularization
+## Regularization
+
 Some methods in this package use sparse matrices
 to perform finite-difference operations.
 Those operations could be performed
@@ -127,7 +133,7 @@ jim(
 
 
 #=
-### Support mask
+## Support mask
 
 Often we want to estimate a fieldmap
 over some spatial support "mask"
@@ -142,7 +148,7 @@ about the related `embed` and `maskit` operations.
 
 
 #=
-### Reproducibility
+## Reproducibility
 This page was generated with the following version of Julia:
 =#
 
