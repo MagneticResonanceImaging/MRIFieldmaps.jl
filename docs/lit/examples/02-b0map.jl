@@ -71,26 +71,26 @@ if !@isdefined(ftrue)
     ftrue .*= mask # true field map (in Hz) for simulation
     mag = data["in_obj"]["xtrue"] .* mask # true baseline magnitude
     (nx,ny,nz) = size(mag)
-
-    # RMSE within the mask
-    frmse = f -> round(sqrt(sum(abs2, (f - ftrue)[mask]) / count(mask)), digits=1)
 end
 
+# RMSE within the mask
+frmse = f -> round(sqrt(sum(abs2, (f - ftrue)[mask]) / count(mask)), digits=1)
 
+
+# parameters for data generation
+p = (
+    echotime = [0, 2, 10] * 1f-3, # echo times in sec
+    true_thresh = 0.05, # threshold of the true object for determining reconstruction mask
+    yk_thresh = 0.1, # scale image
+    d_thresh = 0.1, # scale reg level
+    snr = 24, # noise level in dB
+)
+ne = length(p.echotime)
+nc = 4; # number of coils in simulation
+
+# simulate sense map (rcoil=100 to match matlab default)
+# todo: polynomial approximation?
 if !@isdefined(smap)
-    # parameters for data generation
-    p = (
-        echotime = [0, 2, 10] * 1f-3, # echo times in sec
-        true_thresh = 0.05, # threshold of the true object for determining reconstruction mask
-        yk_thresh = 0.1, # scale image
-        d_thresh = 0.1, # scale reg level
-        snr = 24, # noise level in dB
-    )
-    ne = length(p.echotime)
-    nc = 4 # number of coils in simulation
-
-    # simulate sense map (rcoil=100 to match matlab default)
-    # todo: polynomial approximation?
     smap = ir_mri_sensemap_sim(; dims=(nx, ny, nz), ncoil=nc, rcoil=100)
     div0 = (x::Number,y::Number) -> iszero(y) ? 0 : x/y
     smap ./= sqrt.(sum(abs2, smap; dims=4)) # normalize by SSoS
@@ -101,30 +101,23 @@ end
 #=
 ### Generate simulated image data
 This is the multi-coil version,
-for multiple echo times.
-Note the exp(+1im * phase) here!
+for multiple echo times,
+with additive complex Gaussian noise.
+Note the exp(+1im * phase) in `b0model` here!
 =#
-if !@isdefined(ydata)
-    ytrue = b0model(ftrue, mag, p.echotime; smap)
-
-    # add complex Gaussian noise to image data
-    seed!(0) # matlab and julia will differ
-
-    # compute the noise_std to get the desired SNR
-    image_power = 10 * log10(sum(abs2, mag) / (nx*ny*nz)) # in dB
-    noise_power = image_power - p.snr
-    noise_std = sqrt(10^(noise_power/10)) / 2 # because complex
-
-    # add the noise to the data
-    ynoise = Float32(noise_std) * randn(ComplexF32, size(ytrue))
-    ydata = ytrue + ynoise
-
-    # compute the SNR for each echo time to verify
-    tmp = [sum(abs2, ytrue[:,:,:,:,i]) / sum(abs2, ynoise[:,:,:,:,i]) for i in 1:ne]
-    snr = 10 * log10.(tmp)
-
-    jim(ydata[:,:,:,:,end], "|data|"; ncol=nz÷2)
-end
+ytrue = b0model(ftrue, mag, p.echotime; smap)
+seed!(0) # matlab and julia will differ
+# compute the noise_std to get the desired SNR
+image_power = 10 * log10(sum(abs2, mag) / (nx*ny*nz)) # in dB
+noise_power = image_power - p.snr
+noise_std = sqrt(10^(noise_power/10)) / 2 # because complex
+ynoise = Float32(noise_std) * randn(ComplexF32, size(ytrue))
+ydata = ytrue + ynoise # add the noise to the data
+# compute the SNR for each echo time to verify
+tmp = [sum(abs2, ytrue[:,:,:,:,i]) / sum(abs2, ynoise[:,:,:,:,i]) for i in 1:ne]
+snr = 10 * log10.(tmp)
+# show data magnitude
+jim(ydata[:,:,:,:,end], "|data|"; ncol=nz÷2)
 
 
 # coil combine ydata data and scale
@@ -132,10 +125,8 @@ if !@isdefined(yik_sos)
     yik_sos = sum(conj(smap) .* ydata; dims=4) # coil combine
     yik_sos = yik_sos[:,:,:,1,:] # (dims..., ne)
     jim(yik_sos, "|data sos|"; ncol=nz÷2)
-
-    (yik_sos_scaled, scale) = b0scale(yik_sos, p.echotime) # todo
-    #   mri_field_map_reg_scale(yik_sos, p.echotime;
-    #   fmax = p.yk_thresh, dmax = p.d_thresh) # (dims..., ne)
+    (yik_sos_scaled, scale) = b0scale(yik_sos, p.echotime, # todo
+    ) # mri_field_map_reg_scale fmax = p.yk_thresh, dmax = p.d_thresh) # (dims..., ne)
     jim(yik_sos_scaled, "|scaled data|"; ncol=nz÷2)
 end
 
