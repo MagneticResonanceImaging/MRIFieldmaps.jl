@@ -60,11 +60,15 @@ end
         @test maximum(abs, (fhat - ftrue) .* mask) < 2
     end
 
+    @test_throws String b0map(ydata, echotime; mask, precon=:bad)
+
     for gamma_type in (:FR, :PR)
         (fhat, _, _) = b0map(ydata, echotime; mask,
             niter=5, track=false, gamma_type, chat=false)
         @test maximum(abs, (fhat - ftrue) .* mask) < 2
     end
+
+    @test_throws String b0map(ydata, echotime; mask, gamma_type=:bad)
 
     # multiple coil 2D case
 
