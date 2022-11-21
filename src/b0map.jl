@@ -125,11 +125,13 @@ function b0map(
     (dims..., nc) == size(smap) ||
         throw("bad smap size $(size(smap)) vs dims=$dims & nc=$nc")
 
+    zdata, sos = coil_combine(ydata, smap) # coil combine image data
+
     (fhat, times, out) = b0map(
         finit[mask],
-        reshape(ydata, :, nc, ne)[vec(mask), :, :],
+        reshape(zdata, :, ne)[vec(mask), :],
+        sos[mask],
         echotime,
-        reshape(smap, :, nc)[vec(mask), :],
         mask ;
         kwargs...
     )
@@ -154,16 +156,16 @@ For expert use only.
 
 # In
 - `finit (np)` initial estimate in Hz (`np` is # of pixels in mask)
-- `ydata (np, nc, ne)` `ne` sets of measurements for `nc` coils
+- `zdata (np, ne)` `ne` sets of coil-combined measurements
+- `sos (np)` sum-of-squares of coil maps
 - `echotime (ne)` vector of `ne` echo time offsets
-- `smap (np, nc)` coil maps
 - `mask (N)` logical reconstruction mask
 """
 function b0map(
     finit::AbstractVector{<:RealU},
-    ydata::AbstractArray{<:Complex},
+    zdata::AbstractMatrix{<:Complex},
+    sos::AbstractVector{<:Real},
     echotime::Echotime,
-    smap::AbstractArray{<:Complex},
     mask::AbstractArray{<:Bool},
     ;
     ninner::Int = 3, # subiterations
@@ -181,30 +183,17 @@ function b0map(
     lldl_args::NamedTuple = (; memory = 2),
 )
 
-    Base.require_one_based_indexing(df, echotime, finit, mask, relamp, smap)
+    Base.require_one_based_indexing(df, echotime, finit, mask, relamp, sos, zdata)
     t0 = time() # start timer
 
     # check dimensions
-    (np, nc, ne) = size(ydata)
+    (np, ne) = size(zdata)
     ne == length(echotime) || throw("need echotime to have length ne=$ne")
     np == length(finit) || throw("need finit to have length np=$np")
-    (np, nc) == size(smap) || throw("need smap to have size (np,nc)=($np,$nc)")
+    np == length(sos) || throw("need sos to have length np=$np")
     count(mask) == np || throw("bad mask count")
     length(relamp) == length(df) ||
         throw("inconsistent length df $(length(df)) & relamp $(length(relamp))")
-
-    zdata, sos = coil_combine(ydata, smap) # coil combine image data
-
-    # sparse finite-difference regularization matrix (?,np)
-    C = vcat(spdiff(size(mask); order)...)
-
-    # remove all rows of C that involve non-mask pixels to avoid "leaking"
-    good = iszero.(abs.(C) * .!vec(mask))
-    C = C[good,:]
-    C = C[:,vec(mask)] # (?,np) apply mask
-    β = 2f0^l2b / oneunit(eltype(finit))^2 # unit balancing!
-    C = sqrt(β) * C
-    CC = C' * C
 
     # calculate the magnitude and angles used in the data-fit curvatures
     angz = angle.(zdata)
@@ -241,6 +230,18 @@ function b0map(
     wj_mag .*= sos
     wm_deltaD = wj_mag .* d2 # for derivative
     wm_deltaD2 = wj_mag .* abs2.(d2) # for curvature bound
+
+
+    # sparse finite-difference regularization matrix (?,np)
+    C = vcat(spdiff(size(mask); order)...)
+
+    # remove all rows of C that involve non-mask pixels to avoid "leaking"
+    good = iszero.(abs.(C) * .!vec(mask))
+    C = C[good,:]
+    C = C[:,vec(mask)] # (?,np) apply mask
+    β = 2f0^l2b / oneunit(eltype(finit))^2 # unit balancing!
+    C = sqrt(β) * C
+    CC = C' * C
 
     # prepare output variables
     times = zeros(niter+1)
@@ -371,14 +372,8 @@ function b0map(
             denom = abs2.(ddir)' * hcurv + CdCd
             numer = ddir' * hderiv + (CdCw + step * CdCd);
 
-            if denom == 0
-                @warn "found exact solution??? step=0 now!?"
-                step = 0
-            else
-                # update line search
-                step = step - numer / denom
-            end
-
+            step = denom == 0 ? 0 : step - numer / denom # update line search
+            step == 0 && @warn "found exact solution??? step=0 now!?"
         end
 
         # update the estimate and the finite differences of the estimate
@@ -419,7 +414,6 @@ end
 # compute the data-fit derivatives and curvatures as in Funai 2008 paper
 function Adercurv(d2, ang2, wm_deltaD, wm_deltaD2, w)
     sm = w * vec(d2)' .+ ang2 # (np, ne)
-#   tmp = wm_deltaD .* sin.(sm)
     hderiv = sum(@. wm_deltaD * sin(sm); dims = 2) # (np, ne) -> (np,1)
     srm = @. mod2pi(sm + π) - π
     hcurv = sum(@. wm_deltaD2 * sinc(srm); dims = 2)
