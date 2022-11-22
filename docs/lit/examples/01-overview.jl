@@ -4,7 +4,7 @@
 
 #=
 This page summarizes the Julia package
-[`MRIfieldmaps`](https://github.com/JeffFessler/MRIfieldmaps.jl).
+[`MRIfieldmaps`](https://github.com/MagneticResonanceImaging/MRIfieldmaps.jl).
 
 This page was generated from a single Julia file:
 [01-overview.jl](@__REPO_ROOT_URL__/01-overview.jl).

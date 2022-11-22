@@ -1,6 +1,6 @@
 # MRIfieldmaps
 
-https://github.com/JeffFessler/MRIfieldmaps.jl
+https://github.com/MagneticResonanceImaging/MRIfieldmaps.jl
 
 
 [![action status][action-img]][action-url]
@@ -61,17 +61,17 @@ Tested with Julia ≥ 1.6.
 * https://github.com/ClaireYLin/regularized-field-map-estimation
 
 <!-- URLs -->
-[action-img]: https://github.com/JeffFessler/MRIfieldmaps.jl/workflows/CI/badge.svg
-[action-url]: https://github.com/JeffFessler/MRIfieldmaps.jl/actions
-[build-img]: https://github.com/JeffFessler/MRIfieldmaps.jl/workflows/CI/badge.svg?branch=main
-[build-url]: https://github.com/JeffFessler/MRIfieldmaps.jl/actions?query=workflow%3ACI+branch%3Amain
+[action-img]: https://github.com/MagneticResonanceImaging/MRIfieldmaps.jl/workflows/CI/badge.svg
+[action-url]: https://github.com/MagneticResonanceImaging/MRIfieldmaps.jl/actions
+[build-img]: https://github.com/MagneticResonanceImaging/MRIfieldmaps.jl/workflows/CI/badge.svg?branch=main
+[build-url]: https://github.com/MagneticResonanceImaging/MRIfieldmaps.jl/actions?query=workflow%3ACI+branch%3Amain
 [code-blue-img]: https://img.shields.io/badge/code%20style-blue-4495d1.svg
 [code-blue-url]: https://github.com/invenia/BlueStyle
-[codecov-img]: https://codecov.io/github/JeffFessler/MRIfieldmaps.jl/coverage.svg?branch=main
-[codecov-url]: https://codecov.io/github/JeffFessler/MRIfieldmaps.jl?branch=main
+[codecov-img]: https://codecov.io/github/MagneticResonanceImaging/MRIfieldmaps.jl/coverage.svg?branch=main
+[codecov-url]: https://codecov.io/github/MagneticResonanceImaging/MRIfieldmaps.jl?branch=main
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[docs-stable-url]: https://JeffFessler.github.io/MRIfieldmaps.jl/stable
+[docs-stable-url]: https://MagneticResonanceImaging.github.io/MRIfieldmaps.jl/stable
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
-[docs-dev-url]: https://JeffFessler.github.io/MRIfieldmaps.jl/dev
+[docs-dev-url]: https://MagneticResonanceImaging.github.io/MRIfieldmaps.jl/dev
 [license-img]: http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat
 [license-url]: LICENSE
