@@ -14,6 +14,12 @@ This Julia language repo
 provides methods
 for regularized estimation of fieldmaps in MRI.
 
+Currently there are methods for B0 fieldmap estimation
+from a water-only image signal model,
+or from a water-fat model
+with 1 or more lipid peaks.
+
+
 ## Getting started
 
 ```julia
@@ -28,6 +34,12 @@ For examples,
 see the
 [documentation](https://jefffessler.github.io/MRIfieldmaps.jl/stable).
 
+```julia
+images = ... # complex images of size (nx, ny, ..., ncoil, nechotime)
+images = ComplexF32.(imges) # 32-bit floats saves memory and thus time
+echotime = [0, 2] * 1f-3 # echo times in seconds
+b0fieldmap, _, _ = b0map(images, echotime) # regularized fieldmap in Hz
+```
 
 ### Citations
 
@@ -51,7 +63,7 @@ within each iteration.
 
 ### Compatibility
 
-Tested with Julia ≥ 1.6.
+Tested with Julia ≥ 1.7.
 
 
 ### Related packages
