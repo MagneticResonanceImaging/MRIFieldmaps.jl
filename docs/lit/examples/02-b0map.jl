@@ -34,6 +34,7 @@ import Downloads # todo: use Fetch or DataDeps?
 using MIRT: ir_mri_sensemap_sim
 using Random: seed!
 using StatsBase: mean
+s = 1 # using Unitful: s
 using Plots; default(markerstrokecolor=:auto, label="")
 
 
@@ -53,6 +54,9 @@ in
 [the paper](http://doi.org/10.1109/TCI.2020.3031082)
 "Efficient Regularized Field Map Estimation in 3D MRI"
 by Claire Lin and Jeff Fessler, 2020
+
+This example uses units to illustrate that capability of the package,
+but units are not required.
 =#
 
 # ## Read data
@@ -66,8 +70,7 @@ end;
 if !@isdefined(ftrue)
     zp = 1:40 # choose subset of slices
     mask = data["maskR"][:,:,zp]
-    ftrue = data["in_obj"]["ztrue"][:,:,zp] .* mask
-    ftrue ./= 2π # to Hz
+    ftrue = (data["in_obj"]["ztrue"][:,:,zp] .* mask) / 2π / 1s # Hz
     ftrue .*= mask # true field map (in Hz) for simulation
     mag = data["in_obj"]["xtrue"] .* mask # true baseline magnitude
     (nx,ny,nz) = size(mag)
@@ -76,14 +79,12 @@ if !@isdefined(ftrue)
 end
 
 # Function for computing RMSE within the mask
-frmse = f -> round(sqrt(sum(abs2, (f - ftrue)[mask]) / count(mask)), digits=1);
+frmse = f -> round(sqrt(sum(abs2, (f - ftrue)[mask]) / count(mask)) * s, digits=1) / s;
 
 
 # Parameters for data generation
-echotime = [0, 2, 10] * 1f-3 # echo times in sec
+echotime = [0, 2, 10] * 1f-3 * 1s # echo times in sec
 true_thresh = 0.05 # threshold of the true object for determining reconstruction mask
-yk_thresh = 0.1 # scale image
-d_thresh = 0.1 # scale reg level
 snr = 24 # noise level in dB
 ne = length(echotime)
 nc = 4; # number of coils in simulation
@@ -130,8 +131,7 @@ if !@isdefined(yik_sos)
     yik_sos = sum(conj(smap) .* ydata; dims=4) # coil combine
     yik_sos = yik_sos[:,:,:,1,:] # (dims..., ne)
     jim(yik_sos, "|data sos|"; ncol=nz÷2)
-    (yik_sos_scaled, scale) = b0scale(yik_sos, echotime, # todo
-    ) # mri_field_map_reg_scale fmax = yk_thresh, dmax = d_thresh) # (dims..., ne)
+    (yik_sos_scaled, scale) = b0scale(yik_sos, echotime) # todo
     jim(yik_sos_scaled, "|scaled data|"; ncol=nz÷2)
 end
 
@@ -142,7 +142,7 @@ end
 Compute `finit`
 using phase difference of first two echo times (no smoothing):
 =#
-finit = b0init(ydata, echotime; smap, threshold = yk_thresh)
+finit = b0init(ydata, echotime; smap)
 jim(finit .* mask; clim, title="Initial fieldmap in Hz (Fig 3b)",
     xlabel = "RMSE = $(frmse(finit)) Hz")
 
@@ -155,7 +155,7 @@ Run each algorithm twice; once to track rmse and costs, once for timing
 =#
 yik_scale = ydata / scale
 fmap_run = (niter, precon, track; kwargs...) ->
-    b0map(yik_scale, echotime; smap, mask, # threshold = yk_thresh,
+    b0map(yik_scale, echotime; smap, mask,
        order=1, l2b=-4, gamma_type=:PR, niter, precon, track, kwargs...)
 
 function runner(niter, precon; kwargs...)

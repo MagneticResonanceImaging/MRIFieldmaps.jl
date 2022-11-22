@@ -304,8 +304,8 @@ function b0map(
             npregrad = ngrad * units^2 # note: crucial for unit balance!
 
         elseif precon === :diag
-            H = hcurv + dCC
-            npregrad = ngrad ./ H
+            Hdiag = hcurv + dCC
+            npregrad = ngrad ./ Hdiag
 
         elseif precon === :chol
             H = spdiagm(hcurv) + CC
