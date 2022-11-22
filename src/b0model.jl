@@ -21,14 +21,14 @@ Field map estimation from multiple (`ne ≥ 2`) echo-time images,
 - `echotime (ne)` vector of `ne` echo time offsets (in sec)
 
 # Options
-- `smap (dims...[, nc])` complex coil maps, default `ones(size(fmap))`
+- `smap (dims..., nc)` complex coil maps, default `ones(size(fmap)..., 1)`
 - `xw (dims)` fat magnetization component, default `zeros(size(fmap))`
 - `df` Δf values in water-fat imaging (def: `[0]`) units Hz, e.g., `[440]` at 3T
 - `relamp` relative amplitudes in multi-peak water-fat (def: `[1]`)
 - `relax (dims)` R2* relaxation in same units as `fmap`, i.e., 1/s
 
 # Out
-- `ydata (dims..., [nc,] ne)` `ne` sets of complex images for `nc` coils
+- `ydata (dims..., nc, ne)` `ne` sets of complex images for `nc` coils
 """
 function b0model(
     fmap::AbstractArray{Tf,D},
@@ -47,9 +47,6 @@ function b0model(
 
     dims = size(fmap)
     ndim = length(dims)
-    if ndims(smap) == ndim
-        smap = reshape(smap, size(smap)..., 1) # nc=1 special case
-    end
     nc = size(smap, ndim+1) # ≥ 1
     ne = length(echotime)
 

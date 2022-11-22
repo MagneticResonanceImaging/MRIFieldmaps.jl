@@ -2,7 +2,7 @@
 
 using MRIfieldmaps: b0map, b0model, b0init, b0scale
 using Test: @test, @testset, @test_throws, @inferred
-#using Unitful: s # lldl does not support units
+using Unitful: s
 using ImageGeoms: ImageGeom, circle
 using LinearAlgebra: norm
 using Random: seed!
@@ -39,9 +39,11 @@ end
 
 
 @testset "b0map-wf" begin
+end
     seed!(0)
 #   echotime = [0, 2, 10] * 1f-3 # echo times
-    echotime = [0.0015 0.0038 0.0061 0.0084 0.0106 0.0129 0.0152 0.0174]
+    u = 1s
+    echotime = [0.0015 0.0038 0.0061 0.0084 0.0106 0.0129 0.0152 0.0174] * u
     echotime = Float32.(vec(echotime)) # from PKdata5.mat for 1.5 T
 
     nx, ny = (32, 30)
@@ -49,7 +51,7 @@ end
     mask = circle(ig)
 
     # simple B0 fieldmap for testing
-    ftrue = -10 .+ 50 * exp.(-0.1f0 * (abs2.(axes(ig)[1]) .+ abs2.(axes(ig)[2]')))
+    ftrue = (-10 .+ 50 * exp.(-0.1f0 * (abs2.(axes(ig)[1]) .+ abs2.(axes(ig)[2]')))) / 1u
     rmse = fhat -> round(norm((fhat - ftrue) .* mask) / sqrt(count(mask)); digits=1)
 
     # water and fat images as ramps with random phases
@@ -60,10 +62,10 @@ end
     # multi-species fat model parameters from notes.pdf in
     # https://www.ismrm.org/workshops/FatWater12/data.htm
     fieldstrength = 1.5 # Tesla
-    gyro = 42.58 # gyromagnetic ratio in Hz/Tesla
+    gyro = 42.58/1u # gyromagnetic ratio in Hz/Tesla
     df = [-3.80, -3.40, -2.60, -1.94, -0.39, 0.60] *
         gyro * fieldstrength # Hz fat shift
-    relamp = [0.087, 0.693, 0.128, 0.004, 0.039, 0.048]
+    relamp = Float32[0.087, 0.693, 0.128, 0.004, 0.039, 0.048]
 
     smap = [fill(1f0+2im, ig.dims), fill(3-1im, ig.dims)] # nc=2 coils
     smap = cat(smap...; dims=3) # (dims..., nc)
@@ -81,11 +83,10 @@ end
 #   finit = out.finit
 #   @show maximum(abs, (finit - ftrue) .* mask)
 
-    @test maximum(abs, (fhat - ftrue) .* mask) < 2
-    @test fhat isa Matrix{T}
+    @test maximum(abs, (fhat - ftrue) .* mask) < 2/u
+    @test fhat isa Matrix{eltype(oneunit(T) / 1u)}
     @test out.xw isa Matrix{complex(T)}
     @test out.xf isa Matrix{complex(T)}
     @test norm(scale*out.xw - xwtrue) / norm(xwtrue) < 0.06
     @test norm(scale*out.xf - xftrue) / norm(xftrue) < 0.06
 #   showit(ftrue, xwtrue, xftrue, finit, fhat, scale*out.xw, scale*out.xf; mask)
-end

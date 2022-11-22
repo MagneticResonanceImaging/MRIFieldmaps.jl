@@ -2,7 +2,7 @@
 
 using MRIfieldmaps: spdiff1, spdiff
 using LinearAlgebra: I
-using Test: @test, @testset, @inferred
+using Test: @test, @testset, @test_throws, @inferred
 
 @testset "spdiff1" begin
     @inferred spdiff1(3)
@@ -10,6 +10,7 @@ using Test: @test, @testset, @inferred
 
     @test spdiff1(3; ending=:zero) == [1 0 0; -1 1 0; 0 -1 1]
     @test spdiff1(3; ending=:remove) == [0 0 0; -1 1 0; 0 -1 1]
+    @test_throws String spdiff1(3; ending=:bad)
 
     @test spdiff((4,5,6))[1] == kron(I(6*5), spdiff1(4))
     @test spdiff((4,5,6))[2] == kron(I(6), spdiff1(5), I(4))

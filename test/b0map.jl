@@ -16,8 +16,7 @@ jif = (args...; kwargs...) -> jim(args...; prompt=false, kwargs...)
 @testset "b0map" begin
 #   @inferred b0map() # not type stable - too many "out" options
 
-#   u = 1s
-    u = 1 # units not supported by lldl method
+    u = 1s # test with units
     echotime = [0, 2, 10] * 1f-3u # echo times
     ne = length(echotime)
     dims = (32,30)
@@ -51,20 +50,24 @@ end
     for track in (false, true)
         (fhat, _, _) = b0map(ydata, echotime; mask,
             niter=5, track, chat=false)
-        @test maximum(abs, (fhat - ftrue) .* mask) < 2
+        @test maximum(abs, (fhat - ftrue) .* mask) < 2/u
     end
 
     for precon in (:I, :diag, :chol, :ichol)
         (fhat, _, _) = b0map(ydata, echotime; mask,
             niter=5, track=false, precon, chat=false)
-        @test maximum(abs, (fhat - ftrue) .* mask) < 2
+        @test maximum(abs, (fhat - ftrue) .* mask) < 2/u
     end
+
+    @test_throws String b0map(ydata, echotime; mask, precon=:bad)
 
     for gamma_type in (:FR, :PR)
         (fhat, _, _) = b0map(ydata, echotime; mask,
             niter=5, track=false, gamma_type, chat=false)
-        @test maximum(abs, (fhat - ftrue) .* mask) < 2
+        @test maximum(abs, (fhat - ftrue) .* mask) < 2/u
     end
+
+    @test_throws String b0map(ydata, echotime; mask, gamma_type=:bad)
 
     # multiple coil 2D case
 
@@ -78,12 +81,12 @@ end
     let
         (fhat, times, out) = b0map(ydata, echotime; mask, smap,
             niter=5, chat=false)
-        @test maximum(abs, (fhat - ftrue) .* mask) < 2
+        @test maximum(abs, (fhat - ftrue) .* mask) < 2/u
     end
 
     let
         (fhat, times, out) = b0map(ydata, echotime; mask,
             niter=9, chat=false)
-        @test maximum(abs, (fhat - ftrue) .* mask) < 2
+        @test maximum(abs, (fhat - ftrue) .* mask) < 2/u
     end
 end

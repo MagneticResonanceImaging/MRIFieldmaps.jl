@@ -1,4 +1,4 @@
-# MRIfieldmap
+# MRIfieldmaps
 
 https://github.com/JeffFessler/MRIfieldmaps.jl
 
