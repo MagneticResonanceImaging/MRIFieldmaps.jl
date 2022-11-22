@@ -270,7 +270,9 @@ function b0map(
     end
 
     if precon === :diag
-        dCC = Float32.(diag(CC))
+        dCC = diag(CC)
+        T = eltype(Float32(oneunit(eltype(dCC))))
+        dCC = Vector{T}(dCC)
     end
 
     # initialize NCG variables
