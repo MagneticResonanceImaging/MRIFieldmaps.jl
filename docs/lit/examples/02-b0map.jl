@@ -34,7 +34,7 @@ import Downloads # todo: use Fetch or DataDeps?
 using MIRT: ir_mri_sensemap_sim
 using Random: seed!
 using StatsBase: mean
-s = 1 # using Unitful: s
+using Unitful: s
 using Plots; default(markerstrokecolor=:auto, label="")
 
 
@@ -55,7 +55,8 @@ in
 "Efficient Regularized Field Map Estimation in 3D MRI"
 by Claire Lin and Jeff Fessler, 2020
 
-This example uses units to illustrate that capability of the package,
+This example uses units (seconds)
+to illustrate that capability of the package,
 but units are not required.
 =#
 
@@ -174,6 +175,7 @@ if !@isdefined(fmap_cg_n)
     pi_cn = jim(fmap_cg_n, "CG:I"; clim,
         xlabel = "RMSE = $(frmse(fmap_cg_n)) Hz")
 end
+
 
 # ### 3. NCG: diagonal preconditioner
 if !@isdefined(fmap_cg_d)
