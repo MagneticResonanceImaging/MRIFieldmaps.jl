@@ -46,10 +46,11 @@ isinteractive() ? jim(:prompt, true) : prompt(:draw);
 
 This package provides algorithms
 for estimating fieldmaps in MRI.
-
 Currently it supports B0 map estimation.
-
 A future extension could support B1+ map estimation.
+
+This page just discusses the regularization;
+other examples illustrate specific fieldmap estimators.
 =#
 
 
