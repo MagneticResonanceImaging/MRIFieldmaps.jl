@@ -1,6 +1,6 @@
 # test/combine.jl
 
-using MRIfieldmaps: coil_combine
+using MRIFieldmaps: coil_combine
 using Test: @test, @testset, @inferred
 
 @testset "combine" begin

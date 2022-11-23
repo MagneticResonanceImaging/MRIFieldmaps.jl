@@ -4,7 +4,7 @@ using LinearAlgebra: norm, cholesky
 using ImageGeoms: embed
 using SparseArrays: spdiagm, diag
 using LimitedLDLFactorizations: lldl
-#using MRIfieldmaps: spdiff, b0init, coil_combine
+#using MRIFieldmaps: spdiff, b0init, coil_combine
 
 export b0map
 

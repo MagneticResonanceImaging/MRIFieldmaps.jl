@@ -1,10 +1,10 @@
 #---------------------------------------------------------
-# # [MRIfieldmaps overview](@id 01-overview)
+# # [MRIFieldmaps overview](@id 01-overview)
 #---------------------------------------------------------
 
 #=
 This page summarizes the Julia package
-[`MRIfieldmaps`](https://github.com/MagneticResonanceImaging/MRIfieldmaps.jl).
+[`MRIFieldmaps`](https://github.com/MagneticResonanceImaging/MRIFieldmaps.jl).
 
 This page was generated from a single Julia file:
 [01-overview.jl](@__REPO_ROOT_URL__/01-overview.jl).
@@ -30,7 +30,7 @@ Use `Pkg.add` as illustrated
 when using a package for the first time.
 =#
 
-using MRIfieldmaps: spdiff
+using MRIFieldmaps: spdiff
 using MIRTjim: jim, prompt; jim(:prompt, true)
 using InteractiveUtils: versioninfo
 
