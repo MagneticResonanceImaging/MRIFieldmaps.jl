@@ -1,6 +1,6 @@
 execute = isempty(ARGS) || ARGS[1] == "run"
 
-org, reps = :MagneticResonanceImaging, :MRIfieldmaps
+org, reps = :MagneticResonanceImaging, :MRIFieldmaps
 eval(:(using $reps))
 using Documenter
 using Literate

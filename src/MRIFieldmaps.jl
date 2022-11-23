@@ -1,8 +1,8 @@
 """
-    MRIfieldmaps
-Module `MRIfieldmaps` exports methods for fieldmap estimation.
+    MRIFieldmaps
+Module `MRIFieldmaps` exports methods for fieldmap estimation.
 """
-module MRIfieldmaps
+module MRIFieldmaps
 
     """
         RealU

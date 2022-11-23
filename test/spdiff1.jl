@@ -1,6 +1,6 @@
 # test/spdiff1.jl
 
-using MRIfieldmaps: spdiff1, spdiff
+using MRIFieldmaps: spdiff1, spdiff
 using LinearAlgebra: I
 using Test: @test, @testset, @test_throws, @inferred
 

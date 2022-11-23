@@ -6,7 +6,7 @@
 This page illustrates regularized B0 3D field map estimation
 from multi-echo multi-coil MRI images
 using the Julia package
-[`MRIfieldmaps`](https://github.com/MagneticResonanceImaging/MRIfieldmaps.jl).
+[`MRIFieldmaps`](https://github.com/MagneticResonanceImaging/MRIFieldmaps.jl).
 
 This page was generated from a single Julia file:
 [02-b0map.jl](@__REPO_ROOT_URL__/02-b0map.jl).
@@ -27,7 +27,7 @@ This page was generated from a single Julia file:
 
 # Packages needed here.
 
-using MRIfieldmaps: b0map, b0model, b0init, b0scale
+using MRIFieldmaps: b0map, b0model, b0init, b0scale
 using MIRTjim: jim, prompt; jim(:prompt, true)
 using MAT: matread
 import Downloads # todo: use Fetch or DataDeps?

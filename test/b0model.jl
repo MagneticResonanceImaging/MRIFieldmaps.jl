@@ -1,6 +1,6 @@
 # test/b0model.jl
 
-using MRIfieldmaps: b0model
+using MRIFieldmaps: b0model
 using Unitful: s
 using Test: @test, @testset, @inferred
 

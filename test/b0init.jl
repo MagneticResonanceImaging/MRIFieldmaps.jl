@@ -1,6 +1,6 @@
 # test/b0init.jl
 
-using MRIfieldmaps: b0init, b0model
+using MRIFieldmaps: b0init, b0model
 using Random: seed!
 using Unitful: s
 using Test: @test, @testset, @inferred

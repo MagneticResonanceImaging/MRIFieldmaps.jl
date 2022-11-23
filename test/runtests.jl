@@ -1,10 +1,10 @@
 # test/runtests.jl
 
 using Test: @test, @testset, detect_ambiguities
-import MRIfieldmaps
+import MRIFieldmaps
 
-@testset "MRIfieldmaps" begin
-    @test isempty(detect_ambiguities(MRIfieldmaps))
+@testset "MRIFieldmaps" begin
+    @test isempty(detect_ambiguities(MRIFieldmaps))
 end
 
 include("spdiff1.jl")
