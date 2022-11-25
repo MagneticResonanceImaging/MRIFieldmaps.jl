@@ -10,19 +10,17 @@ export b0map
 
 
 # This function is isolated to facilitate code coverage
-function _check_descent(ddir, grad, npregrad, oldinprod::Number, warned_dir::Bool)
-    # check if correct descent direction
-    if sign(ddir' * grad) > 0
+function _check_descent!(ddir, grad, npregrad, oldinprod::Number, warned_dir::Bool)
+    if sign(ddir' * grad) > 0 # check if a descent direction
         if !warned_dir
             warned_dir = true
             @warn "wrong direction so resetting"
             @warn "<ddir,grad>=$(ddir'*grad), |ddir|=$(norm(ddir)), |grad|=$(norm(grad))"
         end
-        # reset direction if not descending
-        ddir = npregrad
+        copyto!(ddir, npregrad) # reset direction if not descending
         oldinprod = 0
     end
-    return ddir, oldinprod, warned_dir
+    return oldinprod, warned_dir
 end
 
 
@@ -371,27 +369,14 @@ function b0map(
         end
         oldinprod = newinprod
 
-        ddir, oldinprod, warned_dir =
-            _check_descent(ddir, grad, npregrad, oldinprod, warned_dir)
-#=
-        # check if correct descent direction
-        if sign(ddir' * grad) > 0
-            if !warned_dir
-                warned_dir = true
-                @warn "wrong direction so resetting"
-                @warn "<ddir,grad>=$(ddir'*grad), |ddir|=$(norm(ddir)), |grad|=$(norm(grad))"
-            end
-            # reset direction if not descending
-            ddir = npregrad
-            oldinprod = 0
-        end
-=#
+        oldinprod, warned_dir = # verify a descent direction
+            _check_descent!(ddir, grad, npregrad, oldinprod, warned_dir)
 
         # step size in search direction
         Cdir = C * ddir # caution: can be a big array for 3D problems
 
         # compute the monotonic line search using quadratic surrogates
-        CdCd = Cdir' * Cdir
+        CdCd = norm(Cdir)^2
         CdCw = ddir' * CCw
         step = 0
         for is in 1:ninner
