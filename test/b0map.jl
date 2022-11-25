@@ -1,19 +1,17 @@
 # test/b0map.jl
 
-using MRIFieldmaps: b0map, b0scale, b0model
+using MRIFieldmaps: b0map, b0scale, b0model, _check_descent!
 using Test: @test, @testset, @test_throws, @inferred
 using Unitful: s
 using ImageGeoms: ImageGeom, circle
 using LinearAlgebra: norm
 using Random: seed!
 
-#=
-using MIRTjim: jim
-jim(:prompt, true)
-jif = (args...; kwargs...) -> jim(args...; prompt=false, kwargs...)
-=#
 
 @testset "b0map" begin
+
+    _check_descent!([1], [1], 0, 0, false) # code coverage
+
 #   @inferred b0map() # not type stable - too many "out" options
 
     u = 1s # test with units
@@ -29,16 +27,6 @@ jif = (args...; kwargs...) -> jim(args...; prompt=false, kwargs...)
     flim = (-20/u, 40/u)
     xtrue = mask +
         (abs.(axes(ig)[1])/ig.dims[1] .+ abs.(axes(ig)[2]')/ig.dims[2] .< 0.3)
-
-#=
-function showit(fhat)
-    jim(jif(ftrue, "ftrue"), jif(mask), jif(xtrue, "xtrue"),
-        jif(out.finit.*mask, "finit"),
-        jif(fhat, "fhat"; clim=flim, xlabel="$(rmse(fhat))"),
-        jif(fhat-ftrue, "err"),
-    )
-end
-=#
 
     # single coil 2D case
     ydata = @inferred b0model(ftrue, xtrue, echotime)
