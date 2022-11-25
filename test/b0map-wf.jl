@@ -7,41 +7,9 @@ using ImageGeoms: ImageGeom, circle
 using LinearAlgebra: norm
 using Random: seed!
 
-#=
-# debug:
-using MIRTjim: jim
-jim(:prompt, true)
-jif = (args...; kwargs...) -> jim(args...; prompt=false, kwargs...)
-
-function showit(ftrue, xwtrue, xftrue, finit, fhat, xw, xf;
- mask = trues(size(ftrue)),
- clim = (-20, 40),
- elim = (-10, 10),
-)
-    jim(
-        jif(mask, "mask"),
-        jif(ftrue, "ftrue"),
-        jif(xwtrue, "xwtrue"),
-        jif(xftrue, "xftrue"),
-
-        jif(finit.*mask, "finit"; clim),
-        jif(fhat, "fhat"; clim, xlabel="$(rmse(fhat))"),
-        jif(xw, "xw"),
-        jif(xf, "xf"),
-
-        jif((finit-ftrue) .* mask, "f init err"; clim=elim),
-        jif((fhat-ftrue) .* mask, "f err"; clim=elim),
-        jif(xw-xwtrue, "xw err"),
-        jif(xf-xftrue, "xf err"),
-    )
-end
-=#
-
 
 @testset "b0map-wf" begin
-end
     seed!(0)
-#   echotime = [0, 2, 10] * 1f-3 # echo times
     u = 1s
     echotime = [0.0015 0.0038 0.0061 0.0084 0.0106 0.0129 0.0152 0.0174] * u
     echotime = Float32.(vec(echotime)) # from PKdata5.mat for 1.5 T
@@ -80,8 +48,6 @@ end
         # b0init_args = (; fband=80, threshold=0.01),
         order = 2, l2b = -3,
         mask, smap, niter=8, df, relamp, track=true, precon=:diag)
-#   finit = out.finit
-#   @show maximum(abs, (finit - ftrue) .* mask)
 
     @test maximum(abs, (fhat - ftrue) .* mask) < 2/u
     @test fhat isa Matrix{eltype(oneunit(T) / 1u)}
@@ -89,4 +55,4 @@ end
     @test out.xf isa Matrix{complex(T)}
     @test norm(scale*out.xw - xwtrue) / norm(xwtrue) < 0.06
     @test norm(scale*out.xf - xftrue) / norm(xftrue) < 0.06
-#   showit(ftrue, xwtrue, xftrue, finit, fhat, scale*out.xw, scale*out.xf; mask)
+end
