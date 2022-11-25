@@ -9,6 +9,23 @@ using LimitedLDLFactorizations: lldl
 export b0map
 
 
+# This function is isolated to facilitate code coverage
+function _check_descent(ddir, grad, npregrad, oldinprod::Number, warned_dir::Bool)
+    # check if correct descent direction
+    if sign(ddir' * grad) > 0
+        if !warned_dir
+            warned_dir = true
+            @warn "wrong direction so resetting"
+            @warn "<ddir,grad>=$(ddir'*grad), |ddir|=$(norm(ddir)), |grad|=$(norm(grad))"
+        end
+        # reset direction if not descending
+        ddir = npregrad
+        oldinprod = 0
+    end
+    return ddir, oldinprod, warned_dir
+end
+
+
 """
     (fhat, times, out) = b0map(ydata, echotime; kwargs...)
 
@@ -354,6 +371,9 @@ function b0map(
         end
         oldinprod = newinprod
 
+        ddir, oldinprod, warned_dir =
+            _check_descent(ddir, grad, npregrad, oldinprod, warned_dir)
+#=
         # check if correct descent direction
         if sign(ddir' * grad) > 0
             if !warned_dir
@@ -365,6 +385,7 @@ function b0map(
             ddir = npregrad
             oldinprod = 0
         end
+=#
 
         # step size in search direction
         Cdir = C * ddir # caution: can be a big array for 3D problems

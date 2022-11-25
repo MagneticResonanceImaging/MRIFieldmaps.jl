@@ -1,6 +1,6 @@
 # test/b0map.jl
 
-using MRIFieldmaps: b0map, b0scale, b0model
+using MRIFieldmaps: b0map, b0scale, b0model, _check_descent
 using Test: @test, @testset, @test_throws, @inferred
 using Unitful: s
 using ImageGeoms: ImageGeom, circle
@@ -14,6 +14,9 @@ jif = (args...; kwargs...) -> jim(args...; prompt=false, kwargs...)
 =#
 
 @testset "b0map" begin
+
+    _check_descent(1, 1, 0, 0, false) # code coverage
+
 #   @inferred b0map() # not type stable - too many "out" options
 
     u = 1s # test with units
