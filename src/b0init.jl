@@ -43,7 +43,7 @@ then perform discrete maximum-likelihood estimation using `fdict`.
 - `nf` number of discrete frequencies to try;
   default `1+floor(fband)` so ≈1Hz spacing
 - `fdict` "dictionary" of discrete frequency values to try;
-  default `LinRange(-1/2,1/2,nf) * fband`
+  default `range(-1/2,1/2,nf) * fband`
 
 # Out
 - `finit` initial B0 fieldmap estimate in Hz
@@ -106,7 +106,7 @@ function b0init(
     ;
     fband::RealU = floor(oneunit(Te) / minimum(diff(sort(echotime)))) / oneunit(Te),
     nf::Int = 1 + floor(Int, fband * oneunit(Te)),
-    fdict::AbstractVector{<:RealU} = Float32.(LinRange(-0.5,0.5,nf) * fband),
+    fdict::AbstractVector{<:RealU} = Float32.(range(-0.5,0.5,nf) * fband),
 ) where {Te <: RealU}
 
     Base.require_one_based_indexing(df, echotime, fdict, relamp, ydata)

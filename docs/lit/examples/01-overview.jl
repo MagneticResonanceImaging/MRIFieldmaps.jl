@@ -120,8 +120,8 @@ to a simple test phantom.
 Note the use of `vec` and `reshape` for display.
 =#
 dims = (40,30)
-x = LinRange(-1, 1, dims[1])
-y = LinRange(-1, 1, dims[2])
+x = range(-1, 1, dims[1])
+y = range(-1, 1, dims[2])
 phantom = @. abs(x) + abs(y') < 0.5
 sp = spdiff(dims; order=1)
 d1 = reshape(sp[1] * vec(phantom), dims)
