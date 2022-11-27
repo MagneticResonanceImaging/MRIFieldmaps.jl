@@ -9,6 +9,43 @@ using LimitedLDLFactorizations: lldl
 export b0map
 
 
+"""
+    fat_shift (constant NamedTuple)
+
+Multi-species fat model parameters from notes.pdf in
+https://www.ismrm.org/workshops/FatWater12/data.htm
+with fields `ppm` and `relamp`.
+"""
+const fat_shift = (
+    ppm = Float32[-3.80, -3.40, -2.60, -1.94, -0.39, 0.60],
+    relamp = Float32[0.087, 0.693, 0.128, 0.004, 0.039, 0.048],
+)
+
+
+"""
+    fat_model( ; ppm, relamp, sec, fieldstrength, gyro)
+
+# Option
+- `ppm::Vector = fat_shift.ppm` parts per million shifts
+- `relamp::Vector = fat_shift.relamp` relative amplitudes
+- `sec::RealU = 1` to provide units from Unitful
+- `fieldstrength::RealU = 1.5` in Telsa
+- `gyro::RealU = 42.58/sec` proton gyromagnetic ratio in Hz/Tesla
+Returned `NamedTuple` with `df` and `relamp`
+for passing to `b0map`.
+"""
+function fat_model( ;
+    ppm::Vector{<:Real} = fat_shift.ppm,
+    relamp::Vector{<:Real} = fat_shift.relamp,
+    sec::RealU = 1,
+    fieldstrength::RealU = 1.5, # Telsa
+    gyro::RealU = 42.58/sec,
+)
+    df = ppm * gyro * fieldstrength # Hz fat shift
+    return (; df, relamp)
+end
+
+
 # This function is isolated to facilitate code coverage
 function _check_descent!(ddir, grad, npregrad, oldinprod::Number, warned_dir::Bool)
     if sign(ddir' * grad) > 0 # check if a descent direction

@@ -1,11 +1,18 @@
 # test/b0map-wf.jl (B0 fieldmap in water/fat separation case)
 
-using MRIFieldmaps: b0map, b0model, b0init, b0scale
+using MRIFieldmaps: b0map, b0model, b0init, b0scale, fat_model
 using Test: @test, @testset, @test_throws, @inferred
 using Unitful: s
 using ImageGeoms: ImageGeom, circle
 using LinearAlgebra: norm
 using Random: seed!
+
+
+@testset "fat" begin
+    fat = @inferred fat_model()
+    fat = @inferred fat_model(; sec=1s)
+    @test fat isa NamedTuple
+end
 
 
 @testset "b0map-wf" begin
@@ -27,19 +34,13 @@ using Random: seed!
     xwtrue = mask .* (T.((1:nx) / nx) * ones(T, ny)') * 10 .* cis.(rand(T, nx,ny))
     xftrue = mask .* (ones(T, nx) * T.((1:ny)' / ny)) * 10 .* cis.(rand(T, nx,ny))
 
-    # multi-species fat model parameters from notes.pdf in
-    # https://www.ismrm.org/workshops/FatWater12/data.htm
-    fieldstrength = 1.5 # Tesla
-    gyro = 42.58/1u # gyromagnetic ratio in Hz/Tesla
-    df = [-3.80, -3.40, -2.60, -1.94, -0.39, 0.60] *
-        gyro * fieldstrength # Hz fat shift
-    relamp = Float32[0.087, 0.693, 0.128, 0.004, 0.039, 0.048]
+    fat = @inferred fat_model(; sec=1u)
 
     smap = [fill(1f0+2im, ig.dims), fill(3-1im, ig.dims)] # nc=2 coils
     smap = cat(smap...; dims=3) # (dims..., nc)
     smap .*= mask
 
-    ytrue = b0model(ftrue, xwtrue, echotime; smap, df, relamp, xf=xftrue)
+    ytrue = b0model(ftrue, xwtrue, echotime; smap, fat..., xf=xftrue)
     ydata = ytrue + 2 * randn(complex(T), size(ytrue))
     @show snr = 20*log(norm(ytrue) / norm(ydata - ytrue)) # 40 dB
     ydata, scale = b0scale(ydata, echotime) # todo: make internal to b0map!
@@ -47,7 +48,7 @@ using Random: seed!
     (fhat, _, out) = b0map(ydata, echotime;
         # b0init_args = (; fband=80, threshold=0.01),
         order = 2, l2b = -3,
-        mask, smap, niter=8, df, relamp, track=true, precon=:diag)
+        mask, smap, niter=8, fat..., track=true, precon=:diag)
 
     @test maximum(abs, (fhat - ftrue) .* mask) < 2/u
     @test fhat isa Matrix{eltype(oneunit(T) / 1u)}
