@@ -38,7 +38,7 @@ then perform discrete maximum-likelihood estimation using `fdict`.
 # Options for water-fat case:
 - `df` Δf values in water-fat imaging (def: `[]`) units Hz, e.g., `[440]` at 3T
 - `relamp` relative amplitudes in multi-species water-fat (def: `[]`)
-- `fband` frequency bandwidth for `fdict;
+- `fband` frequency bandwidth for `fdict`;
   default `floor(1 / minimum(echo time spacing))`
 - `nf` number of discrete frequencies to try;
   default `1+floor(fband)` so ≈1Hz spacing
