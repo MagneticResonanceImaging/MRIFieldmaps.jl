@@ -136,7 +136,7 @@ b0map
 
 
 function b0map(
-    ydata::Array{<:Complex, D},
+    ydata::AbstractArray{<:Complex, D},
     echotime::Echotime{Te},
     ;
     smap::AbstractArray{<:Complex} = ones(ComplexF32, size(ydata)[1:end-1]),
@@ -157,7 +157,7 @@ end
 
 function b0map(
     finit::AbstractArray{<:RealU},
-    ydata::Array{<:Complex},
+    ydata::AbstractArray{<:Complex},
     echotime::Echotime,
     ;
     smap::AbstractArray{<:Complex} = ones(ComplexF32, size(finit)..., 1),
@@ -165,7 +165,7 @@ function b0map(
     kwargs...
 )
 
-    Base.require_one_based_indexing(echotime, finit, mask, smap)
+    Base.require_one_based_indexing(echotime, finit, mask, smap, ydata)
 
     dims = size(finit)
     nc = size(smap)[end] # ≥ 1
