@@ -1,6 +1,6 @@
 # test/b0model.jl
 
-using MRIFieldmaps: b0model
+using MRIFieldmaps: b0model, fat_model
 using Unitful: s
 using Test: @test, @testset, @inferred
 
@@ -16,31 +16,32 @@ using Test: @test, @testset, @inferred
     fmap = (10 .+ 20 * randn(T, dims)) / 1u
     nc = 2
     smap = randn(Tc, dims..., nc)
-    xw = randn(Tc, dims)
-    xf = randn(Tc, dims)
+    xwater = randn(Tc, dims)
+    xfat = randn(Tc, dims)
     relax = rand(T, dims) / 1u
 
-    images = @inferred b0model(fmap, xw, echotime)
+    images = @inferred b0model(fmap, xwater, echotime)
     @test size(images) == (dims..., 1, ne)
     @test images isa Array{Tc}
 
-    images = @inferred b0model(fmap, xw, echotime; smap, relax)
+    images = @inferred b0model(fmap, xwater, echotime; smap, relax)
     @test size(images) == (dims..., nc, ne)
     @test images isa Array{Tc}
 
 
-    df = [1f0/u]
-    relamp = [1f0]
+    fat = fat_model(; sec=1f0u)
+#   df = [1f0/u]
+#   relamp = [1f0]
 
-    images = @inferred b0model(fmap, xw, echotime; df, relamp)
+    images = @inferred b0model(fmap, xwater, echotime; fat..., xfat)
     @test size(images) == (dims..., 1, ne)
     @test images isa Array{Tc}
 
-    images = @inferred b0model(fmap, xw, echotime; df, relamp, smap)
+    images = @inferred b0model(fmap, xwater, echotime; fat..., xfat, smap)
     @test size(images) == (dims..., nc, ne)
     @test images isa Array{Tc}
 
-    images = @inferred b0model(fmap, xw, echotime; df, relamp, smap, relax)
+    images = @inferred b0model(fmap, xwater, echotime; fat..., xfat, smap, relax)
     @test size(images) == (dims..., nc, ne)
     @test images isa Array{Tc}
 end

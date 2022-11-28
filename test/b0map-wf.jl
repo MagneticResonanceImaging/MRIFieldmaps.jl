@@ -40,7 +40,7 @@ end
     smap = cat(smap...; dims=3) # (dims..., nc)
     smap .*= mask
 
-    ytrue = b0model(ftrue, xwtrue, echotime; smap, fat..., xf=xftrue)
+    ytrue = b0model(ftrue, xwtrue, echotime; smap, fat..., xfat=xftrue)
     ydata = ytrue + 2 * randn(complex(T), size(ytrue))
     @show snr = 20*log(norm(ytrue) / norm(ydata - ytrue)) # 40 dB
     ydata, scale = b0scale(ydata, echotime) # todo: make internal to b0map!
