@@ -74,6 +74,13 @@ if !@isdefined(ftrue)
     ftrue = (data["in_obj"]["ztrue"][:,:,zp] .* mask) / 2π / 1s # Hz
     ftrue .*= mask # true field map (in Hz) for simulation
     mag = data["in_obj"]["xtrue"] .* mask # true baseline magnitude
+    if false # 2× in all 3 dimensions to make (128,128,80) for timing test (≈6sec)
+        catd = (x,d) -> cat(x, x, dims=d)
+        bigify = (x) -> catd(catd(catd(x, 1), 2), 3)
+        ftrue = bigify(ftrue)
+        mag = bigify(mag)
+        mask = bigify(mask)
+    end
     (nx,ny,nz) = size(mag)
     clim = (-100,100) # display range in Hz
     jim(ftrue .* mask; clim, title="True fieldmap in Hz (Fig 3d)")
