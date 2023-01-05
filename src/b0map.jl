@@ -206,7 +206,7 @@ function b0map(
         precon === :chol # https://github.com/JuliaLang/julia/issues/47655
         finit = finit / units
         df = df / units
-        echotime = echotime * units
+        echotime = collect(echotime) * units
         fixunits = units
     else
         fixunits = 1
