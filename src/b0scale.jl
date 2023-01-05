@@ -45,10 +45,10 @@ http://doi.org/10.1109/TMI.2008.923956
 """
 function b0scale(
     ydata::AbstractArray{<:Complex},
-    echotime::Union{AbstractVector{Te}, NTuple{N,Te} where N},
+    echotime::Echotime{Te},
     ;
     dmax::Real = 0.1,
-) where Te <: RealU
+) where {Te <: RealU}
 
     Base.require_one_based_indexing(ydata, echotime)
 
@@ -56,7 +56,7 @@ function b0scale(
     ydata = reshape(ydata, :, dims[end]) # (*dims, ne)
 
     (nn, ne) = size(ydata)
-    echotime = echotime / oneunit(eltype(echotime)) # units are irrelevant here
+    echotime = collect(echotime) / oneunit(Te) # units are irrelevant here
 
     # Try to compensate for R2 effects on effective regularization.
     # This uses eqn (15) of Funai&Fessler, with the numerator of (9):

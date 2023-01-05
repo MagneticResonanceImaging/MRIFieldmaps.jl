@@ -18,7 +18,7 @@ Field map estimation from multiple (`ne ≥ 2`) echo-time images,
 # In
 - `fmap (dims)` fieldmap (in Hz)
 - `xw (dims)` water magnetization component
-- `echotime (ne)` vector of `ne` echo time offsets (in sec)
+- `echotime (ne)` vector or `Tuple` of `ne` echo time offsets (in sec)
 
 # Options
 - `smap (dims..., nc)` complex coil maps, default `ones(size(fmap)..., 1)`
@@ -33,7 +33,7 @@ Field map estimation from multiple (`ne ≥ 2`) echo-time images,
 function b0model(
     fmap::AbstractArray{Tf,D},
     xw::AbstractArray{Tx,D},
-    echotime::Union{AbstractVector{Te}, NTuple{N,Te} where N},
+    echotime::Echotime{Te},
     ;
     df::AbstractVector{<:RealU} = [0f0*oneunit(Tf)],
     relamp::AbstractVector{<:RealU} = [1f0],
@@ -57,6 +57,7 @@ function b0model(
         throw("bad smap size $(size(smap)) vs dims=$dims & nc=$nc")
 
     # sum_{p=0}^P α_p exp(ı 2π Δf_p t_l)
+    echotime = collect(echotime)
     fat_phase = cis.(2f0π * echotime * df') * relamp
     # x[j,l] = xw[j] + xf[j] * sum_{p=0}^P α_p exp(ı 2π Δf_p t_l)
     fat_phase = reshape(fat_phase, ones(Int, ndim)..., ne)

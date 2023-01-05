@@ -110,6 +110,7 @@ function b0init(
 ) where {Te <: RealU}
 
     Base.require_one_based_indexing(df, echotime, fdict, relamp, ydata)
+    echotime = collect(echotime)
 
     (np,ne) = size(ydata)
     ne == length(echotime) || throw("ne mismatch $ne $(length(echotime))")
@@ -128,7 +129,7 @@ function b0init(
     set = 0
     nset = cumsum(1:ne-1)[end]
     wj_mag = zeros(Float32, np, nset)
-    d2 = zeros(eltype(echotime), nset)
+    d2 = zeros(Te, nset)
     ang2 = zeros(Float32, np, nset)
 
     for j in 2:ne, i in 1:(j-1) # for each unique pair of echo times

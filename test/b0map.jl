@@ -15,7 +15,7 @@ using Random: seed!
 #   @inferred b0map() # not type stable - too many "out" options
 
     u = 1s # test with units
-    echotime = [0, 2, 10] * 1f-3u # echo times
+    echotime = (0, 2, 10) .* 1f-3u # echo times
     ne = length(echotime)
     dims = (32,30)
     ig = ImageGeom( ; dims )

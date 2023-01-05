@@ -1,7 +1,7 @@
 name = "MRIFieldmaps"
 uuid = "5af58b90-8a55-4daf-adb4-2008a66a38cf"
 authors = ["Jeff Fessler <fessler@umich.edu> and others"]
-version = "0.0.1"
+version = "0.0.2"
 
 [deps]
 ImageGeoms = "9ee76f2b-840d-4475-b6d6-e485c9297852"
