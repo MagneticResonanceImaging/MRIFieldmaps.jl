@@ -53,7 +53,7 @@ but internally the code works with `ω = 2π f` (rad/s).
 
 # Options
 - `finit (dims)` initial fieldmap estimate (in Hz); default from `b0init()`
-- `smap (dims..., nc)` complex coil maps; default `ones(size(ydata)[1:end-1])`
+- `smap (dims..., nc)` complex coil maps; default `nothing`
 - `mask (dims...)` logical reconstruction mask; default: `trues(size(finit))`
 - `ninner` # of inner iterations for monotonic line search
   default: `3` inner iterations
@@ -102,7 +102,7 @@ function b0map(
     ydata::Array{<:Complex, D},
     echotime::Echotime{Te},
     ;
-    smap::AbstractArray{<:Complex} = ones(ComplexF32, size(ydata)[1:end-1]),
+    smap::Union{<:AbstractArray{<:Complex},Nothing} = nothing,
     df::AbstractVector{<:RealU} = eltype(1/oneunit(Te))[],
     relamp::AbstractVector{<:RealU} = ones(Float32, size(df)) / max(1, length(df)),
     b0init_args::NamedTuple = (;),
@@ -123,21 +123,22 @@ function b0map(
     ydata::Array{<:Complex},
     echotime::Echotime,
     ;
-    smap::AbstractArray{<:Complex} = ones(ComplexF32, size(finit)..., 1),
+    smap::Union{<:AbstractArray{<:Complex},Nothing} = nothing,
     mask::AbstractArray{<:Bool} = trues(size(finit)),
     kwargs...
 )
 
-    Base.require_one_based_indexing(echotime, finit, mask, smap)
+    Base.require_one_based_indexing(echotime, finit, mask)
+    isnothing(smap) || Base.require_one_based_indexing(smap)
 
     dims = size(finit)
-    nc = size(smap)[end] # ≥ 1
+    nc = isnothing(smap) ? size(ydata)[end-1] : size(smap)[end] # ≥ 1
     ne = length(echotime)
 
     # check dimensions
     (dims..., nc, ne) == size(ydata) || throw("bad ydata size")
     dims == size(mask) || throw("bad mask size $(size(mask)) vs dims=$dims")
-    (dims..., nc) == size(smap) ||
+    isnothing(smap) || (dims..., nc) == size(smap) ||
         throw("bad smap size $(size(smap)) vs dims=$dims & nc=$nc")
 
     zdata, sos = coil_combine(ydata, smap) # coil combine image data
