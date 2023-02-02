@@ -49,3 +49,36 @@ function coil_combine(
 
     return zdata, sos
 end
+
+
+function coil_combine(
+    ydata::AbstractArray{<:Complex},
+    smap::Nothing = nothing,
+)
+
+    Base.require_one_based_indexing(ydata)
+
+    dims = size(ydata)[1:end-2]
+    ndim = length(dims)
+    nc = size(ydata)[ndim+1]
+    ne = size(ydata)[ndim+2]
+
+    y = ntuple(ne) do e
+        ye = selectdim(ydata, ndim+2, e)
+        [selectdim(ye, ndim+1, c) for c = 1:nc]
+    end
+    y1 = y[1]
+
+    sos = sum(yc1 -> abs2.(yc1), y1)
+    sos = sqrt.(sos)
+    y1sos = map(yc1 -> yc1 ./ sos, y1)
+    zdata = map(y) do ye
+        mapreduce(+, y1sos, ye) do yc1sos, yce
+            conj.(yc1sos) .* yce
+        end
+    end
+    zdata = cat(zdata..., dims=ndim+1)
+    sos ./= maximum(sos) # Seems to help keep regularization parameter scale-independent
+
+    return zdata, sos
+end
