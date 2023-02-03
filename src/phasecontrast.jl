@@ -4,6 +4,20 @@
     pc = phasecontrast(ydata)
     fhat = phasecontrast(ydata, echotime)
 
+Compute the phase contrast between two multicoil data sets.
+If `echotime` is provided,
+return a field map
+by converting from radians to Hz
+(if `echotime` is in seconds, as is typical).
+
+# In
+- `ydata (dims..., nc, ne)` `ne` sets of complex images for `nc ≥ 1` coils
+- `echotime::Echotime (ne = 2)` echo time offsets
+
+# Out
+- `pc (dims...)` phase contrast (or field map, if `echotime` is provided):
+  `∠(sum_c ydata[c,1]' * ydata[c,2])`
+
 See equation [13] in
 M A Bernstein et al.,
 "Reconstructions of Phase Contrast, Phased Array Multicoil Data", MRM 1994.
