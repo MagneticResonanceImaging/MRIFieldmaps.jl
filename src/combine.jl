@@ -97,7 +97,7 @@ function coil_combine(
         end
     end
     zdata = cat(zdata..., dims=ndim+1)
-    sos ./= maximum(sos) # Seems to help keep regularization parameter scale-independent
+    sos ./= maximum(sos)^2 # Seems to help keep regularization parameter scale-independent
 
     return zdata, sos
 end
