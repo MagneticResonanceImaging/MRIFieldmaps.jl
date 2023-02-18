@@ -1,26 +1,13 @@
-#---------------------------------------------------------
-# # [B0 field map](@id 02-b0map)
-#---------------------------------------------------------
-
 #=
+# [B0 field map](@id 02-b0map)
+
 This page illustrates regularized B0 3D field map estimation
 from multi-echo multi-coil MRI images
 using the Julia package
 [`MRIFieldmaps`](https://github.com/MagneticResonanceImaging/MRIFieldmaps.jl).
-
-This page was generated from a single Julia file:
-[02-b0map.jl](@__REPO_ROOT_URL__/02-b0map.jl).
 =#
 
-#md # In any such Julia documentation,
-#md # you can access the source code
-#md # using the "Edit on GitHub" link in the top right.
-
-#md # The corresponding notebook can be viewed in
-#md # [nbviewer](http://nbviewer.jupyter.org/) here:
-#md # [`02-b0map.ipynb`](@__NBVIEWER_ROOT_URL__/02-b0map.ipynb),
-#md # and opened in [binder](https://mybinder.org/) here:
-#md # [`02-b0map.ipynb`](@__BINDER_ROOT_URL__/02-b0map.ipynb).
+#srcURL
 
 
 # ### Setup
@@ -45,7 +32,7 @@ isinteractive() ? jim(:prompt, true) : prompt(:draw);
 
 
 #=
-### Overview
+## Overview
 
 This example is based on the simulation example from
 [the repo](https://github.com/ClaireYLin/regularized-field-map-estimation)

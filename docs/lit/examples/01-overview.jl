@@ -1,24 +1,11 @@
-#---------------------------------------------------------
-# # [MRIFieldmaps overview](@id 01-overview)
-#---------------------------------------------------------
-
 #=
+# [MRIFieldmaps overview](@id 01-overview)
+
 This page summarizes the Julia package
 [`MRIFieldmaps`](https://github.com/MagneticResonanceImaging/MRIFieldmaps.jl).
-
-This page was generated from a single Julia file:
-[01-overview.jl](@__REPO_ROOT_URL__/01-overview.jl).
 =#
 
-#md # In any such Julia documentation,
-#md # you can access the source code
-#md # using the "Edit on GitHub" link in the top right.
-
-#md # The corresponding notebook can be viewed in
-#md # [nbviewer](http://nbviewer.jupyter.org/) here:
-#md # [`01-overview.ipynb`](@__NBVIEWER_ROOT_URL__/01-overview.ipynb),
-#md # and opened in [binder](https://mybinder.org/) here:
-#md # [`01-overview.ipynb`](@__BINDER_ROOT_URL__/01-overview.ipynb).
+#srcURL
 
 
 #=
@@ -42,7 +29,7 @@ isinteractive() ? jim(:prompt, true) : prompt(:draw);
 
 
 #=
-### Overview
+## Overview
 
 This package provides algorithms
 for estimating fieldmaps in MRI.
@@ -148,14 +135,4 @@ about the related `embed` and `maskit` operations.
 =#
 
 
-#=
-## Reproducibility
-This page was generated with the following version of Julia:
-=#
-
-io = IOBuffer(); versioninfo(io); split(String(take!(io)), '\n')
-
-
-# And with the following package versions
-
-import Pkg; Pkg.status()
+include("../../../inc/reproduce.jl")
