@@ -102,8 +102,7 @@ and
 Here,
 $t_m - t_n$ represents the echo time difference
 between the $m$th and $n$th echoes,
-and, for the case
-where sensitivity maps are given,
+and
 ```math
 r_{mnj} = \frac{1}{N_{\mathrm{e}}} z_{mj}^{*} z_{nj},
 ```
@@ -115,16 +114,35 @@ NOTE: It looks like `b0map` multiplies $r_{mnj}$ by $sos_j$.
 TODO: Maybe update $r_{mnj}$ above to include multiplication by $sos_j$?
 
 We now consider what $z_{nj}$ looks like
-for the two coil combination schemes discussed.
+for the coil combination schemes discussed.
 
+1. *Coil combination using coil sensitivities:*
+   In this case,
+   we first compute
+   the sum-of-squares of the sensitivity maps:
+   ```math
+   v_j = \sum_{c = 1}^{N_{\mathrm{c}}} |s_{cj}|^2,
+   ```
+   where $s_{cj}$ is the coil sensitivity
+   of coil $c$ at voxel $j$,
+   and $N_{\mathrm{c}}$ is the number of coils.
+   We then use the sensitivity maps
+   for the coil combination:
+   ```math
+   z_{nj} = \frac{1}{v_j} \sum_{c = 1}^{N_{\mathrm{c}}} s_{cj}^{*} y_{cnj},
+   ```
+   where $y_{cnj}$ is the image data
+   for coil $c$ of echo $n$ at voxel $j$.
+   TODO: We then end up multiplying by $v_j$.
 1. *Taking coil sensitivities to be uniformly equal to 1:*
    In this case,
+   $s_{cj} = 1 \, \forall c, j$,
+   so $v_j = N_{\mathrm{c}}$
+   and
    ```math
-   z_{nj} = \frac{1}{N_{\mathrm{c}}} y_{nj},
+   z_{nj} = \frac{1}{N_{\mathrm{c}}} \sum_{c = 1}^{N_{\mathrm{c}}} y_{cnj}.
    ```
-   where $N_{\mathrm{c}}$ is the number of coils.
-   TODO: But then `b0map` multiplies by $N_{\mathrm{c}}$,
-   so maybe I should just ignore that factor.
+   TODO: We then end up multiplying by $v_j$.
    TODO: Is β even scale independent?? I don't see where in the code that is the case.
 1. *Phase contrast-based approach:*
    In this case,
@@ -132,15 +150,18 @@ for the two coil combination schemes discussed.
    by taking the square root sum-of-squares
    across coils:
    ```math
-   s_{1j} = \sqrt{\sum_{c = 1}^{N_{\mathrm{c}}} |y_{c1j}|^2},
+   v_j = \sqrt{\sum_{c = 1}^{N_{\mathrm{c}}} |y_{c1j}|^2},
    ```
    where $y_{c1j}$ is the image data
    for coil $c$ of the first echo at voxel $j$.
    Then, for each echo,
    we coil combine in the following way:
    ```math
-   z_{nj} = \frac{1}{s_{1j}} \sum_{c = 1}^{N_{\mathrm{c}}} y_{c1j}^{*} y_{cnj}.
+   z_{nj} = \frac{1}{v_j} \sum_{c = 1}^{N_{\mathrm{c}}} y_{c1j}^{*} y_{cnj}.
    ```
+   TODO: We then end up multiplying by $\frac{v_j}{\mathrm{max}_{j} v_j^2}$.
+   TODO: Does it make more sense to divide by $|y_{c1j}|$ when computing $z_{nj}$?
+   (Rather than dividing my $v_j$ and then multiplying by the above constant.)
 
 This example shows a simulated experiment
 where a B0 field map is estimated
