@@ -112,7 +112,7 @@ for echo $n$ at voxel $j$,
 and $\cdot^{*}$ denotes complex conjugate.
 
 NOTE: It looks like `b0map` multiplies $r_{mnj}$ by $sos_j$.
-TODO: Update $r_{mnj}$ above to include multiplication by $sos_j$?
+TODO: Maybe update $r_{mnj}$ above to include multiplication by $sos_j$?
 
 We now consider what $z_{nj}$ looks like
 for the two coil combination schemes discussed.
@@ -128,7 +128,19 @@ for the two coil combination schemes discussed.
    TODO: Is β even scale independent?? I don't see where in the code that is the case.
 1. *Phase contrast-based approach:*
    In this case,
-   TODO: Finish
+   we first coil combine the first echo image
+   by taking the square root sum-of-squares
+   across coils:
+   ```math
+   s_{1j} = \sqrt{\sum_{c = 1}^{N_{\mathrm{c}}} |y_{c1j}|^2},
+   ```
+   where $y_{c1j}$ is the image data
+   for coil $c$ of the first echo at voxel $j$.
+   Then, for each echo,
+   we coil combine in the following way:
+   ```math
+   z_{nj} = \frac{1}{s_{1j}} \sum_{c = 1}^{N_{\mathrm{c}}} y_{c1j}^{*} y_{cnj}.
+   ```
 
 This example shows a simulated experiment
 where a B0 field map is estimated
