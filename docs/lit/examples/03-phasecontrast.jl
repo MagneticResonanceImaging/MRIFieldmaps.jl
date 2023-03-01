@@ -47,7 +47,7 @@ isinteractive() ? jim(:prompt, true) : prompt(:draw);
 
 When estimating B0 field maps
 from multi-coil data,
-the images must first be coil-combined
+the images first must be coil-combined
 in a way that preserves image phase.
 Ideally,
 one has access to coil sensitivity maps
@@ -71,7 +71,9 @@ about the coil sensitivies
 and coil combine the images
 using a phase contrast-based approach.
 
-We now review how the choice of coil combination scheme
+We now review the B0 mapping procedure
+so that we can then understand
+how the choice of coil combination scheme
 influences the estimated field map.
 For the case we are considering,
 where coil combination is done
@@ -103,15 +105,30 @@ between the $m$th and $n$th echoes,
 and, for the case
 where sensitivity maps are given,
 ```math
-r_{mnj} = \frac{1}{N_{\mathrm{e}}} y_{mj}^{*} y_{nj},
+r_{mnj} = \frac{1}{N_{\mathrm{e}}} z_{mj}^{*} z_{nj},
 ```
-where $y_{mj}$ is the (coil-combined) image value
-for echo $m$ at voxel $j$,
+where $z_{nj}$ is the (coil-combined) image value
+for echo $n$ at voxel $j$,
 and $\cdot^{*}$ denotes complex conjugate.
 
-We now consider what $y_{nj}$ looks like
+NOTE: It looks like `b0map` multiplies $r_{mnj}$ by $sos_j$.
+TODO: Update $r_{mnj}$ above to include multiplication by $sos_j$?
+
+We now consider what $z_{nj}$ looks like
 for the two coil combination schemes discussed.
-TODO: Finish
+
+1. *Taking coil sensitivities to be uniformly equal to 1:*
+   In this case,
+   ```math
+   z_{nj} = \frac{1}{N_{\mathrm{c}}} y_{nj},
+   ```
+   where $N_{\mathrm{c}}$ is the number of coils.
+   TODO: But then `b0map` multiplies by $N_{\mathrm{c}}$,
+   so maybe I should just ignore that factor.
+   TODO: Is β even scale independent?? I don't see where in the code that is the case.
+1. *Phase contrast-based approach:*
+   In this case,
+   TODO: Finish
 
 This example shows a simulated experiment
 where a B0 field map is estimated
