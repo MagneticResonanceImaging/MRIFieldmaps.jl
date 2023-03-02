@@ -31,7 +31,7 @@ This page was generated from a single Julia file:
 
 # Packages needed here.
 
-using MRIFieldmaps: b0map
+using MRIFieldmaps: b0map, phasecontrast
 using MIRTjim: jim, prompt; jim(:prompt, true)
 using Random: seed!
 
@@ -81,7 +81,7 @@ as a preprocessing step,
 the regularized, iterative B0 mapping procedure
 seeks to minimize
 ```math
-\Psi(\mathbf{\omega}) = \Phi(\mathrm{\omega}) + \frac{\beta}{2} \|\mathbf{C} \mathbf{\omega}\|_2^2,
+\Psi(\mathbf{\omega}) = \Phi(\mathbf{\omega}) + \frac{\beta}{2} \|\mathbf{C} \mathbf{\omega}\|_2^2,
 ```
 where $\mathbf{\omega}$ is the field map,
 $\Phi(\mathbf{\omega})$ computes the data fit term,
@@ -216,7 +216,8 @@ jim(obj; title = "Object")
 # Create a linearly (spatially) varying field map.
 ftrue = repeat(range(-50, 50, nx), 1, ny) # Hz
 ftrue .*= mask # Mask out background voxels for better visualization
-jim(ftrue; title = "True field map")
+clim = (-60, 60) # Use common colorbar limits for all field map plots
+jim(ftrue; title = "True field map", clim)
 
 # ### Data
 
@@ -238,7 +239,7 @@ end;
 # Create the simulated data.
 seed!(0)
 ydata = cat(make_data.(TE)...; dims = 4)
-jim([ydata[:,:,:,1];;; ydata[:,:,:,2]]; title = "Simulated data")
+jim([ydata[:,:,:,1];;; ydata[:,:,:,2]]; title = "Simulated data", ncol = 4)
 
 
 # ## Estimate B0
@@ -247,9 +248,69 @@ jim([ydata[:,:,:,1];;; ydata[:,:,:,2]]; title = "Simulated data")
 # we can estimate B0 from the data
 # using the different approaches.
 
-# First, create a function for computing the RMSE of the estimated B0 maps.
-frmse = f -> round(sqrt(sum(abs2, (f - ftrue)[mask]) / count(mask)); digits = 1);
+# First, create a function for computing the RMSE of the estimated B0 maps
+# and another function for displaying the B0 maps.
+frmsd = (f1, f2) -> round(sqrt(sum(abs2, (f1 - f2)[mask]) / count(mask)); digits = 1)
+frmse = f -> frmsd(f, ftrue)
+plotb0 = f -> jim(f; title = "RMSE = $(frmse(f))", clim);
+
+# Also specify the strength of the regularization parameter.
+l2b = -2; # Regularization parameter is 2^l2b
+
+# ### Use coil sensitivity maps
+
+fcoil = b0map(ydata, TE; smap, l2b)[1] .* mask
+plotb0(fcoil)
 
 # ### Assume uniform coil sensitivities
 
+funiform = b0map(ydata, TE; smap = ones(eltype(smap), size(smap)), l2b)[1] .* mask
+plotb0(funiform)
 
+# ### Use phase contrast-based approach
+
+fpc_iterative = b0map(ydata, TE; smap = nothing, l2b)[1] .* mask
+plotb0(fpc_iterative)
+
+# ### Do conventional (non-iterative) phase contrast B0 mapping
+
+fpc = phasecontrast(ydata, TE) .* mask
+plotb0(fpc)
+
+# ### Show all field maps together
+
+annotate = (col, row, title; fontsize = 12) -> begin
+    x = nx ÷ 2 + nx * (col - 1)
+    y = 4 + ny * (row - 1)
+    return (x, y, (title, fontsize))
+end
+jim([ftrue;;; fcoil;;; funiform;;; zeros(eltype(ftrue), size(ftrue));;; fpc_iterative;;; fpc];
+    clim, ncol = 3, annotation = [
+        annotate(1, 1, "ftrue"),
+        annotate(2, 1, "fcoil"),
+        annotate(3, 1, "funiform"),
+        annotate(2, 2, "fpc_iterative"),
+        annotate(3, 2, "fpc"),
+])
+
+# Display the RMSE of each field map.
+[
+    "Method"       "RMSE";
+    :fcoil         frmse(fcoil);
+    :funiform      frmse(funiform);
+    :fpc_iterative frmse(fpc_iterative);
+    :fpc           frmse(fpc);
+]
+
+# Compute the root mean square difference
+# between the iterative B0 mapping approach
+# that used the phase contrast-based coil combination method
+# and the conventional phase contrast B0 map.
+println("RMSD = ", frmsd(fpc_iterative, fpc))
+
+
+#=
+## Summary
+
+TODO: Finish this
+=#
