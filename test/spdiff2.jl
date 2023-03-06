@@ -16,4 +16,7 @@ using Test: @test, @testset, @test_throws, @inferred
     @test spdiff((4,5,6); order=2)[1] == kron(I(6*5), spdiff2(4))
     @test spdiff((4,5,6); order=2)[2] == kron(I(6), spdiff2(5), I(4))
     @test spdiff((4,5,6); order=2)[3] == kron(spdiff2(6), I(4*5))
+
+    @test spdiff((4,5); order=2)[1] == kron(I(5), spdiff2(4))
+    @test spdiff((4,5); order=2)[2] == kron(spdiff2(5), I(4))
 end
