@@ -110,14 +110,14 @@ dims = (40,30)
 x = LinRange(-1, 1, dims[1])
 y = LinRange(-1, 1, dims[2])
 phantom = @. abs(x) + abs(y') < 0.5
-sp = spdiff(dims; order=1)
-d1 = reshape(sp[1] * vec(phantom), dims)
-d2 = reshape(sp[2] * vec(phantom), dims)
-jim(
- jim(x, y, phantom, "Test image"),
- jim(x, y, d1, "1st dim differences"),
- jim(x, y, d2, "2nd dim differences"),
-)
+pl = Array{Any}(undef, 2, 2)
+for order in 1:2, d in 1:2
+    sp = spdiff(dims; order)
+    dif = reshape(sp[d] * vec(phantom), dims)
+    pl[d,order] = jim(x, y, dif, "dim$d differences\norder=$order")
+end
+pp = jim(x, y, phantom, "Test image")
+jim([[pp pp]; pl]...)
 
 
 #=
