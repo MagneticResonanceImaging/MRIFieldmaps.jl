@@ -63,7 +63,7 @@ within each iteration.
 
 ### Compatibility
 
-Tested with Julia ≥ 1.7.
+Tested with Julia ≥ 1.8.
 
 
 ### Related packages
