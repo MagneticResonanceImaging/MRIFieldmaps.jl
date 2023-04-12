@@ -1,8 +1,6 @@
-#---------------------------------------------------------
-# # [Phase contrast B0 mapping](@id 03-phasecontrast)
-#---------------------------------------------------------
-
 #=
+# [Phase contrast B0 mapping](@id 03-phasecontrast)
+
 This page illustrates regularized B0 3D field map estimation
 from multi-echo, multi-coil MRI images
 using the Julia package
@@ -11,20 +9,9 @@ In this case,
 we assume we do not have access to coil sensitivity maps.
 Instead of using those maps for coil combination,
 we will use a phase contrast-based approach.
-
-This page was generated from a single Julia file:
-[03-phasecontrast.jl](@__REPO_ROOT_URL__/03-phasecontrast.jl).
 =#
 
-#md # In any such Julia documentation,
-#md # you can access the source code
-#md # using the "Edit on GitHub" link in the top right.
-
-#md # The corresponding notebook can be viewed in
-#md # [nbviewer](http://nbviewer.jupyter.org/) here:
-#md # [`03-phasecontrast.ipynb`](@__NBVIEWER_ROOT_URL__/03-phasecontrast.ipynb),
-#md # and opened in [binder](https://mybinder.org/) here:
-#md # [`03-phasecontrast.ipynb`](@__BINDER_ROOT_URL__/03-phasecontrast.ipynb).
+#srcURL
 
 
 # ### Setup
@@ -43,7 +30,7 @@ isinteractive() ? jim(:prompt, true) : prompt(:draw);
 
 
 #=
-### Overview
+## Overview
 
 When estimating B0 field maps
 from multi-coil data,
