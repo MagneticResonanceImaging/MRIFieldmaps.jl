@@ -88,7 +88,6 @@ function coil_combine(
 
     # Coil combine image data
     sos = sum(yc1 -> abs2.(yc1), y1)
-    sos = sqrt.(sos) # Field maps look bad when not taking the square root
     y1sos = map(yc1 -> yc1 ./ sos, y1)
     zdata = map(y) do ye
         # See eqn. [13] in the cited paper
@@ -97,7 +96,6 @@ function coil_combine(
         end
     end
     zdata = cat(zdata..., dims=ndim+1)
-    sos ./= maximum(sos)^2 # Seems to help keep regularization parameter scale-independent
 
     return zdata, sos
 end

@@ -47,7 +47,7 @@ isinteractive() ? jim(:prompt, true) : prompt(:draw);
 
 When estimating B0 field maps
 from multi-coil data,
-the images first must be coil-combined
+the images first can be coil-combined
 in a way that preserves image phase.
 Ideally,
 one has access to coil sensitivity maps
@@ -108,10 +108,7 @@ r_{mnj} = \frac{1}{N_{\mathrm{e}}} z_{mj}^{*} z_{nj},
 ```
 where $z_{nj}$ is the (coil-combined) image value
 for echo $n$ at voxel $j$,
-and $\cdot^{*}$ denotes complex conjugate.
-
-NOTE: It looks like `b0map` multiplies $r_{mnj}$ by $sos_j$.
-TODO: Maybe update $r_{mnj}$ above to include multiplication by $sos_j$?
+and $(\cdot)^{*}$ denotes complex conjugate.
 
 We now consider what $z_{nj}$ looks like
 for the coil combination schemes discussed.
@@ -129,41 +126,35 @@ for the coil combination schemes discussed.
    We then use the sensitivity maps
    for the coil combination:
    ```math
-   z_{nj} = \frac{1}{v_j} \sum_{c = 1}^{N_{\mathrm{c}}} s_{cj}^{*} y_{cnj},
+   z_{nj} = \frac{1}{\sqrt{v_j}} \sum_{c = 1}^{N_{\mathrm{c}}} s_{cj}^{*} y_{cnj},
    ```
    where $y_{cnj}$ is the image data
    for coil $c$ of echo $n$ at voxel $j$.
-   TODO: We then end up multiplying by $v_j$.
 1. *Taking coil sensitivities to be uniformly equal to 1:*
    In this case,
    $s_{cj} = 1 \, \forall c, j$,
    so $v_j = N_{\mathrm{c}}$
    and
    ```math
-   z_{nj} = \frac{1}{N_{\mathrm{c}}} \sum_{c = 1}^{N_{\mathrm{c}}} y_{cnj}.
+   z_{nj} = \frac{1}{\sqrt{N_{\mathrm{c}}}} \sum_{c = 1}^{N_{\mathrm{c}}} y_{cnj}.
    ```
-   TODO: We then end up multiplying by $v_j$.
-   TODO: Is β even scale independent?? I don't see where in the code that is the case.
 1. *Phase contrast-based approach:*
    In this case,
    we first coil combine the first echo image
-   by taking the square root sum-of-squares
+   by taking the sum-of-squares
    across coils:
    ```math
-   v_j = \sqrt{\sum_{c = 1}^{N_{\mathrm{c}}} |y_{c1j}|^2},
+   v_j = \sum_{c = 1}^{N_{\mathrm{c}}} |y_{c1j}|^2,
    ```
    where $y_{c1j}$ is the image data
    for coil $c$ of the first echo at voxel $j$.
    Then, for each echo,
    we coil combine in the following way:
    ```math
-   z_{nj} = \frac{1}{v_j} \sum_{c = 1}^{N_{\mathrm{c}}} y_{c1j}^{*} y_{cnj}.
+   z_{nj} = \frac{1}{\sqrt{v_j}} \sum_{c = 1}^{N_{\mathrm{c}}} y_{c1j}^{*} y_{cnj}.
    ```
-   TODO: We then end up multiplying by $\frac{v_j}{\mathrm{max}_{j} v_j^2}$.
-   TODO: Does it make more sense to divide by $|y_{c1j}|$ when computing $z_{nj}$?
-   (Rather than dividing my $v_j$ and then multiplying by the above constant.)
 
-This example shows a simulated experiment
+The example that follows shows a simulated experiment
 where a B0 field map is estimated
 without knowledge
 of the coil sensitivies.
@@ -174,7 +165,7 @@ where coil sensitivity information is known.
 This example also compares
 the above regularized, iteratively estimated B0 maps
 to one obtained
-using a phase contrast B0 mapping approach.
+using a (non-iterative) phase contrast B0 mapping approach.
 =#
 
 # ## Get simulated data
@@ -215,6 +206,7 @@ jim(obj; title = "Object")
 
 # Create a linearly (spatially) varying field map.
 ftrue = repeat(range(-50, 50, nx), 1, ny) # Hz
+ftrue[nx÷2,ny÷2] = 50 # Add Kronecker impulse for visualizing regularization-induced blur
 ftrue .*= mask # Mask out background voxels for better visualization
 clim = (-60, 60) # Use common colorbar limits for all field map plots
 jim(ftrue; title = "True field map", clim)
@@ -254,22 +246,26 @@ frmsd = (f1, f2) -> round(sqrt(sum(abs2, (f1 - f2)[mask]) / count(mask)); digits
 frmse = f -> frmsd(f, ftrue)
 plotb0 = f -> jim(f; title = "RMSE = $(frmse(f))", clim);
 
-# Also specify the strength of the regularization parameter.
-l2b = -2; # Regularization parameter is 2^l2b
+# Also specify the strength of the regularization parameter,
+# as well as the type of preconditioner to use.
+# (Note that the default preconditioner used by `b0map` (`precon = :ichol`)
+# does not produce good results in this example.)
+l2b = -26 # Regularization parameter is β = 2^l2b
+precon = :diag;
 
 # ### Use coil sensitivity maps
 
-fcoil = b0map(ydata, TE; smap, l2b)[1] .* mask
+fcoil = b0map(ydata, TE; smap, l2b, precon)[1] .* mask
 plotb0(fcoil)
 
 # ### Assume uniform coil sensitivities
 
-funiform = b0map(ydata, TE; smap = ones(eltype(smap), size(smap)), l2b)[1] .* mask
+funiform = b0map(ydata, TE; smap = ones(eltype(smap), size(smap)), l2b, precon)[1] .* mask
 plotb0(funiform)
 
 # ### Use phase contrast-based approach
 
-fpc_iterative = b0map(ydata, TE; smap = nothing, l2b)[1] .* mask
+fpc_iterative = b0map(ydata, TE; smap = nothing, l2b, precon)[1] .* mask
 plotb0(fpc_iterative)
 
 # ### Do conventional (non-iterative) phase contrast B0 mapping
@@ -284,14 +280,16 @@ annotate = (col, row, title; fontsize = 12) -> begin
     y = 4 + ny * (row - 1)
     return (x, y, (title, fontsize))
 end
-jim([ftrue;;; fcoil;;; funiform;;; zeros(eltype(ftrue), size(ftrue));;; fpc_iterative;;; fpc];
-    clim, ncol = 3, annotation = [
-        annotate(1, 1, "ftrue"),
-        annotate(2, 1, "fcoil"),
-        annotate(3, 1, "funiform"),
-        annotate(2, 2, "fpc_iterative"),
-        annotate(3, 2, "fpc"),
-])
+annotation = [
+    annotate(1, 1, "ftrue"),
+    annotate(2, 1, "fcoil"),
+    annotate(3, 1, "funiform"),
+    annotate(2, 2, "fpc_iterative"),
+    annotate(3, 2, "fpc"),
+]
+fzero = zeros(eltype(ftrue), size(ftrue))
+fmaps = [ftrue;;; fcoil;;; funiform;;; fzero;;; fpc_iterative;;; fpc]
+jim(fmaps; clim, annotation, ncol = 3)
 
 # Display the RMSE of each field map.
 [
@@ -312,5 +310,23 @@ println("RMSD = ", frmsd(fpc_iterative, fpc))
 #=
 ## Summary
 
-TODO: Finish this
+In this example,
+the iterative B0-mapping method
+that used the phase contrast-based coil combination method
+performed just as well
+(in terms of RMSE)
+as the approach
+that used coil-sensitivity information
+for coil combination.
+The iterative approach
+that did coil combination
+assuming uniform coil sensitivities
+did slightly worse,
+and the non-iterative phase contrast approach
+had the worst RMSE.
+However,
+in this example,
+all the approaches performed fairly well;
+perhaps a different data set
+would result in more dramatic differences.
 =#
