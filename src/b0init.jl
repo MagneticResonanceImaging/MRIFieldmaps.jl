@@ -30,7 +30,7 @@ then perform discrete maximum-likelihood estimation using `fdict`.
 - `echotime (ne)` vector of `ne ≥ 2` echo times (only first 2 are used)
 
 # Options
-- `smap (dims..., nc)` complex coil maps; default ones
+- `smap (dims..., nc)` complex coil maps; default `nothing`
 - `threshold` set `finit` values where `|y1| < threshold * max(|y1|)`
    to the mean of the "good" values where `|y1| ≥ threshold * max(|y1|)`.
    default: `0.1`
@@ -52,7 +52,7 @@ function b0init(
     ydata::AbstractArray{<:Complex,D},
     echotime::Echotime{Te},
     ;
-    smap::AbstractArray{<:Complex} = ones(ComplexF32, size(ydata)[1:end-1]),
+    smap::Union{<:AbstractArray{<:Complex},Nothing} = nothing,
     threshold::Real = 0.1,
     df::AbstractVector{<:RealU} = Float32[],
     relamp::AbstractVector{<:RealU} = ones(Float32, size(df)) / max(1, length(df)),
@@ -60,7 +60,8 @@ function b0init(
     kwargs...
 )::Array{T,D-2} where {D, Te <: RealU}
 
-    Base.require_one_based_indexing(echotime, smap, ydata)
+    Base.require_one_based_indexing(echotime, ydata)
+    isnothing(smap) || Base.require_one_based_indexing(smap)
 
     dims = size(ydata)[1:end-2]
     ndim = length(dims)
@@ -68,7 +69,7 @@ function b0init(
     ne = size(ydata)[ndim+2]
 
     # check dimensions
-    size(smap) == (dims..., nc) ||
+    isnothing(smap) || size(smap) == (dims..., nc) ||
         throw("bad smap size $(size(smap)) != $((dims..., nc))")
 
     ne == length(echotime) || throw("need echotime to have length ne=$ne")

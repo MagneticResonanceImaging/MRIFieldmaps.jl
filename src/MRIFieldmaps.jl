@@ -21,6 +21,7 @@ module MRIFieldmaps
     include("spdiff1.jl")
     include("spdiff2.jl")
     include("spdiff.jl")
+    include("phasecontrast.jl")
     include("b0model.jl")
     include("b0init.jl")
     include("b0scale.jl")
