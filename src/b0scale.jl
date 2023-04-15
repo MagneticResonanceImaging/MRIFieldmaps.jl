@@ -30,7 +30,7 @@ so it is fine to pass unmasked images here.
 This normalization simplifies regularization parameter selection
 for regularized B0 fieldmap estimation.
 See eqn (9) and (15) of Funai & Fessler, Oct. 2008, IEEE T-MI,
-http://doi.org/10.1109/TMI.2008.923956
+https://doi.org/10.1109/TMI.2008.923956
 
 # In
 - `ydata (dims..., ne)` scan images for `ne` different echo times

@@ -90,8 +90,8 @@ but internally the code works with `ω = 2π f` (rad/s).
 The algorithm is based on the paper:
 C Y Lin, J A Fessler,
 "Efficient Regularized Field Map Estimation in 3D MRI", IEEE TCI 2020
-http://doi.org/10.1109/TCI.2020.3031082
-http://arxiv.org/abs/2005.08661
+https://doi.org/10.1109/TCI.2020.3031082
+https://arxiv.org/abs/2005.08661
 
 Please cite that paper if you use this code.
 """

@@ -38,7 +38,7 @@ This example is based on the simulation example from
 [the repo](https://github.com/ClaireYLin/regularized-field-map-estimation)
 that reproduces Experiment A and Figs. 3 & 4
 in
-[the paper](http://doi.org/10.1109/TCI.2020.3031082)
+[the paper](https://doi.org/10.1109/TCI.2020.3031082)
 "Efficient Regularized Field Map Estimation in 3D MRI"
 by Claire Lin and Jeff Fessler, 2020
 
