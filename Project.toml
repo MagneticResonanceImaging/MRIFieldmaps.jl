@@ -1,7 +1,7 @@
 name = "MRIFieldmaps"
 uuid = "5af58b90-8a55-4daf-adb4-2008a66a38cf"
 authors = ["Jeff Fessler <fessler@umich.edu> and others"]
-version = "0.0.2"
+version = "0.0.3"
 
 [deps]
 ImageGeoms = "9ee76f2b-840d-4475-b6d6-e485c9297852"
@@ -14,4 +14,4 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 ImageGeoms = "0.10"
 LimitedLDLFactorizations = "0.5"
 StatsBase = "0.33, 0.34"
-julia = "v1.8"
+julia = "v1.9"
