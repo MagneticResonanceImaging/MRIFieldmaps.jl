@@ -3,8 +3,6 @@ b0init.jl
 Initialize b0 fieldmap using the classic "phase difference"
 =#
 
-using StatsBase: mean
-
 export b0init
 
 
