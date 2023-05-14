@@ -21,6 +21,7 @@ we will use a phase contrast-based approach.
 using MRIFieldmaps: b0map, phasecontrast
 using MIRTjim: jim, prompt; jim(:prompt, true)
 using Random: seed!
+using Unitful: s, ms, Hz
 
 
 # The following line is helpful when running this file as a script;
@@ -162,7 +163,7 @@ using a (non-iterative) phase contrast B0 mapping approach.
 # Create a function for generating Gaussian-shaped, pure-real sensitivity maps.
 function sensitivity_map(nx, ny, cx, cy, σ)
 
-    s = [exp(-((x - cx)^2 + (y - cy)^2) / σ^2) for x = 1:nx, y = 1:ny]
+    s = [exp(-((x - cx)^2 + (y - cy)^2) / σ^2) for x in 1:nx, y in 1:ny]
     return complex.(s ./ maximum(s))
 
 end;
@@ -185,32 +186,32 @@ jim(smap; title = "Sensitivity maps")
 # Create a disk-shaped object
 # with uniform intensity (M0) throughout.
 radius = 25
-obj = [(x - nx÷2)^2 + (y - ny÷2)^2 < radius^2 for x = 1:nx, y = 1:ny]
+obj = [(x - nx÷2)^2 + (y - ny÷2)^2 < radius^2 for x in 1:nx, y in 1:ny]
 mask = obj .> 0 # Mask indicating object support
 jim(obj; title = "Object")
 
 # ### True field map
 
 # Create a linearly (spatially) varying field map.
-ftrue = repeat(range(-50, 50, nx), 1, ny) # Hz
-ftrue[nx÷2,ny÷2] = 50 # Add Kronecker impulse for visualizing regularization-induced blur
+ftrue = repeat(range(-50, 50, nx), 1, ny) * Hz
+ftrue[nx÷2,ny÷2] = 50Hz # Add Kronecker impulse for visualizing regularization-induced blur
 ftrue .*= mask # Mask out background voxels for better visualization
-clim = (-60, 60) # Use common colorbar limits for all field map plots
+clim = (-60, 60) .* Hz # Use common colorbar limits for all field map plots
 jim(ftrue; title = "True field map", clim)
 
 # ### Data
 
 # Specify parameters for the simulated multi-echo, multi-coil data.
-TE = (4.0e-3, 6.3e-3) # s
-T2 = 40e-3 # s
+TE = (4.0ms, 6.3ms)
+T2 = 40ms
 σ_noise = 0.005; # Noise standard deviation
 
 # Make a function for creating the simulated data
 # for a given echo time.
 function make_data(TE)
 
-    data = smap .* obj .* exp.(-TE / T2) .* cispi.(2 .* TE .* ftrue) # Noiseless
-    data .+= complex.(σ_noise .* randn.(), σ_noise .* randn.()) # Add complex Gaussian noise
+    data = @. smap * obj * exp(-TE / T2) * cispi(2TE * ftrue) # Noiseless
+    @. data += complex(σ_noise * randn(), σ_noise * randn()) # Add complex Gaussian noise
     return data
 
 end;
@@ -218,25 +219,29 @@ end;
 # Create the simulated data.
 seed!(0)
 ydata = cat(make_data.(TE)...; dims = 4)
-jim([ydata[:,:,:,1];;; ydata[:,:,:,2]]; title = "Simulated data", ncol = 4)
+jim(ydata; title = "Simulated data", ncol = 4)
 
 
-# ## Estimate B0
+#=
+## Estimate B0
 
-# Now that we have the simulated data,
-# we can estimate B0 from the data
-# using the different approaches.
+Now that we have the simulated data,
+we can estimate B0 from the data
+using the different approaches.
 
-# First, create a function for computing the RMSE of the estimated B0 maps
-# and another function for displaying the B0 maps.
-frmsd = (f1, f2) -> round(sqrt(sum(abs2, (f1 - f2)[mask]) / count(mask)); digits = 1)
+First, create a function for computing the RMSE of the estimated B0 maps
+and another function for displaying the B0 maps.
+=#
+frmsd = (f1, f2) -> 1Hz * round(sqrt(sum(abs2, (f1 - f2)[mask]) / count(mask))/1Hz; digits = 1)
 frmse = f -> frmsd(f, ftrue)
 plotb0 = f -> jim(f; title = "RMSE = $(frmse(f))", clim);
 
-# Also specify the strength of the regularization parameter,
-# as well as the type of preconditioner to use.
-# (Note that the default preconditioner used by `b0map` (`precon = :ichol`)
-# does not produce good results in this example.)
+#=
+Also specify the strength of the regularization parameter,
+as well as the type of preconditioner to use.
+(Note that the default preconditioner used by `b0map` (`precon = :ichol`)
+does not produce good results in this example.)
+=#
 l2b = -26 # Regularization parameter is β = 2^l2b
 precon = :diag;
 
