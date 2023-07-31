@@ -72,6 +72,9 @@ Tested with Julia ≥ 1.9.
 
 * https://github.com/ClaireYLin/regularized-field-map-estimation
 
+* https://github.com/korbinian90/ROMEO.jl
+  phase unwrapping tools that may be helpful for initialization
+
 <!-- URLs -->
 [action-img]: https://github.com/MagneticResonanceImaging/MRIFieldmaps.jl/workflows/CI/badge.svg
 [action-url]: https://github.com/MagneticResonanceImaging/MRIFieldmaps.jl/actions
