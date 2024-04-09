@@ -40,7 +40,7 @@ function b0model(
     smap::AbstractArray{<:Complex} = ones(ComplexF32, size(fmap)..., 1),
     xf::AbstractArray{<:Number,D} = zeros(Tx, size(fmap)),
     relax::AbstractArray{<:RealU} = zeros(Tf, size(fmap)),
-    T::DataType = promote_type(Tx, ComplexF32, eltype(oneunit(Tf)*oneunit(Te))),
+    T::Type{<:Number} = promote_type(Tx, ComplexF32, eltype(oneunit(Tf)*oneunit(Te))),
 )::Array{T,D+2} where {D, Te <: RealU, Tf <: RealU, Tx <: Number}
 
     Base.require_one_based_indexing(df, echotime, fmap, relamp, smap, xf, xw)

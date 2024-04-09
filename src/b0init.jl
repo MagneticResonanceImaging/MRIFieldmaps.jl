@@ -54,7 +54,7 @@ function b0init(
     threshold::Real = 0.1,
     df::AbstractVector{<:RealU} = Float32[],
     relamp::AbstractVector{<:RealU} = ones(Float32, size(df)) / max(1, length(df)),
-    T::DataType = eltype(1 / oneunit(Te)),
+    T::Type{<:Number} = eltype(1 / oneunit(Te)),
     kwargs...
 )::Array{T,D-2} where {D, Te <: RealU}
 
