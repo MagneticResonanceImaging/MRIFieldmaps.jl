@@ -8,7 +8,7 @@ using LinearAlgebra: I
 
 
 """
-    spdiff2(n::Int; ending::Symbol = :remove, T::DataType = Int32)
+    spdiff2(n::Int; ending::Symbol = :remove, T::Type = Int32)
 
 Sparse `n × n` matrix
 for 2nd-order finite differences.
@@ -20,7 +20,7 @@ for 2nd-order finite differences.
   - `:zero` keep first and last rows, akin to zero boundary conditions
   - `:first` use 1st-order finite differences for first and last rows
 """
-function spdiff2(n::Int; ending::Symbol = :remove, T::DataType = Int32)
+function spdiff2(n::Int; ending::Symbol = :remove, T::Type{<:Number} = Int32)
     sp = spdiagm(-1 => -ones(T,n-1), +1 => -ones(T,n-1), 0 => fill(T(2), n))
     if ending === :remove
         sp[1,1:3] .= zero(T)
