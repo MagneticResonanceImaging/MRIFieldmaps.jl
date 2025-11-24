@@ -55,7 +55,7 @@ are uniformly equal to 1).
 Alternatively,
 one can effectively use the multi-coil images themselves
 to glean information
-about the coil sensitivies
+about the coil sensitivities
 and coil combine the images
 using a phase contrast-based approach.
 
@@ -145,7 +145,7 @@ for the coil combination schemes discussed.
 The example that follows shows a simulated experiment
 where a B0 field map is estimated
 without knowledge
-of the coil sensitivies.
+of the coil sensitivities.
 This example examines B0 maps estimated
 when using both coil combination approaches
 and compares them to the case
