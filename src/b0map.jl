@@ -1,8 +1,8 @@
 # b0map.jl
 
-using LinearAlgebra: norm, cholesky
+using LinearAlgebra: cholesky, diag, norm
 using ImageGeoms: embed
-using SparseArrays: spdiagm, diag
+using SparseArrays: spdiagm
 using LimitedLDLFactorizations: lldl
 #using MRIFieldmaps: spdiff, b0init, coil_combine
 
