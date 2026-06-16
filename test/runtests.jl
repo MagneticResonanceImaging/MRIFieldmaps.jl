@@ -7,6 +7,7 @@ import MRIFieldmaps
     @test isempty(detect_ambiguities(MRIFieldmaps))
 end
 
+include("aqua.jl")
 include("spdiff1.jl")
 include("spdiff2.jl")
 include("b0init.jl")
