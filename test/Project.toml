@@ -1,4 +1,5 @@
 [deps]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 ImageGeoms = "9ee76f2b-840d-4475-b6d6-e485c9297852"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MRIFieldmaps = "5af58b90-8a55-4daf-adb4-2008a66a38cf"
