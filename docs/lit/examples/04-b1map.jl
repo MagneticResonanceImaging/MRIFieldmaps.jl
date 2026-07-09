@@ -36,7 +36,7 @@ isinteractive() ? jim(:prompt, true) : prompt(:draw);
 
 The approach considered here
 is based on methods described
-in Ch.~V of the
+in Ch. V of the
 [2011 PhD Thesis of Amanda Funai](https://hdl.handle.net/2027.42/86473).
 That work in term is a significant extension
 of the 2007 ISBI paper
@@ -107,14 +107,12 @@ pmask = jim(x, y, mask, "mask"; xlabel="x", ylabel="y")
 #=
 ## Sensitivity maps (coil receive)
 
-Here we use 2 highly idealized receive coil sensitivity maps,
+Here we use 3 highly idealized receive coil sensitivity maps,
 roughly corresponding to the
 [Biot-Savart law](https://en.wikipedia.org/wiki/Biot-Savart_law)
 for an infinite thin wire,
 as a crude approximation of a
 [birdcage coil](https://en.wikipedia.org/wiki/Radiofrequency_coil).
-One wire is outside the upper right corner,
-the other is outside the left border.
 =#
 
 """
@@ -133,11 +131,12 @@ function _rcv(wx, wy)
 end
 
 smap = stack(splat(_rcv), (
-    (maximum(x) + 8dx, maximum(y) + 8dy),
-    (maximum(x) + 8dx, minimum(y) - 8dy),
-    (minimum(x) - 20dx, 0dy),
+    (maximum(x) + 8dx, maximum(y) + 8dy), # upper right corner
+    (maximum(x) + 8dx, minimum(y) - 8dy), # lower right corner
+    (minimum(x) - 20dx, 0dy), # middle left border
   )
-)
+);
+
 
 #=
 Typical sensitivity map estimation methods
@@ -153,13 +152,11 @@ for ic in 1:ncoilr
     tmp_s ./= ssos # normalize
     tmp_s[.!mask] .= 0 # apply mask
 end
-#smap .*= mask
-smaps = collect(eachslice(smap, dims=3)) # code hereafter expects vector of maps
 
 ps = jim(
- jim(x, y, abs.(smap), " |Sensitivity maps raw| (ncoilr=$ncoilr)";
+ jim(x, y, abs.(smap), " |Sensitivity maps| (ncoilr=$ncoilr)";
   color=:cividis, ncol=ncoilr, prompt=false),
- jim(x, y, angle.(smap), "∠(Sensitivity maps raw)";
+ jim(x, y, angle.(smap), "∠(Sensitivity maps)";
   color=:hsv, ncol=ncoilr, prompt=false,
   clim=(-π,π), colorbar_ticks = ([-π, 0, π], ["-π", "0", "π"]),
  ),
@@ -206,14 +203,13 @@ xtrue = reshape(chi, 1, 1, 1, M) .*
 ρtrue = image0 .* Ffun.(xtrue) # excited magnetization (N) × ncoilt × M
 @show extrema(abs, ρtrue)
 ytrue = reshape(smap, N..., 1, 1, ncoilr) .*
-        reshape(ρtrue, N..., ncoilt, M, 1) # (N) × ncoilt × M × ncoilr
+        reshape(ρtrue, N..., ncoilt, M, 1); # (N) × ncoilt × M × ncoilr
 
 
 # Add noise
-# compute the noise_std to get the desired SNR
 snr_db = 25 # SNR in dB
-σ = snr2sigma(snr_db, ytrue)
-ymeas = ComplexF32.(ytrue) + Float32(σ) * randn(ComplexF32, size(ytrue))
+σ = snr2sigma(snr_db, ytrue) # noise std for the desired SNR
+ymeas = ComplexF32.(ytrue) + Float32(σ) * randn(ComplexF32, size(ytrue));
 #src datasnr = 10 * log10(sum(abs2, ytrue) / sum(abs2, ymeas-ytrue)) # check
 
 
@@ -229,6 +225,7 @@ ycomb = reshape(ycomb, N..., ncoilt, M) # (N) × ncoilt × M
 jim(x, y, abs.(ycomb); nrow=M, ncol=ncoilt,
  title = "|Coil-combined data| for M=$M")
 
+# (The 2nd row of images is brighter because of the double angle.)
 
 #=
 Estimate B1+ map
@@ -241,19 +238,14 @@ tmp = abs.( 0.5 *
     selectdim(ycomb, ndims(ycomb), 1)
 )
 tmp = min.(tmp, 1)
-b1_dam = acos.(tmp) / α_target # note scaling!
+b1_dam = acos.(tmp) / α_target; # note scaling!
 
 # Examine B1 error only inside the head:
 emask = image0 .!= 0
 
-#src Function for computing RMSE within the "error" mask
-#src rmse(e) = sqrt(sum(abs2, x) / length(x))
-#src brmse = (bh, bt) -> round(rmse((bh - bt)[emask]), digits=1)
-
 mag_err = abs.(b1_true) - abs.(b1_dam) # todo: mag error only?
 mag_err .*= emask # show error in the head only
-brmse = sqrt(sum(abs2, mag_err) / count(emask) / ncoilt)
-brmse = round(brmse, sigdigits=2)
+brmse = round(sqrt(sum(abs2, mag_err) / count(emask) / ncoilt), sigdigits=2)
 
 clim = extrema(abs, b1_true)
 RGB255(args...) = RGB((args ./ 255)...)
