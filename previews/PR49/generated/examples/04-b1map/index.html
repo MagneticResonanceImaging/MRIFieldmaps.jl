@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>B1+ mapping · MRIFieldmaps.jl</title><meta name="title" content="B1+ mapping · MRIFieldmaps.jl"/><meta property="og:title" content="B1+ mapping · MRIFieldmaps.jl"/><meta property="twitter:title" content="B1+ mapping · MRIFieldmaps.jl"/><meta name="description" content="Documentation for MRIFieldmaps.jl."/><meta property="og:description" content="Documentation for MRIFieldmaps.jl."/><meta property="twitter:description" content="Documentation for MRIFieldmaps.jl."/><meta property="og:url" content="https://MagneticResonanceImaging.github.io/MRIFieldmaps.jl/stable/generated/examples/04-b1map/"/><meta property="twitter:url" content="https://MagneticResonanceImaging.github.io/MRIFieldmaps.jl/stable/generated/examples/04-b1map/"/><link rel="canonical" href="https://MagneticResonanceImaging.github.io/MRIFieldmaps.jl/stable/generated/examples/04-b1map/"/><script data-outdated-warner src="../../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../search_index.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script><link href="../../../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../../">MRIFieldmaps.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../../">Home</a></li><li><a class="tocitem" href="../../../methods/">Methods</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../01-overview/">MRIFieldmaps overview</a></li><li><a class="tocitem" href="../02-b0map/">B0 field map</a></li><li><a class="tocitem" href="../03-phasecontrast/">Phase contrast B0 mapping</a></li><li class="is-active"><a class="tocitem" href>B1+ mapping</a><ul class="internal"><li><a class="tocitem" href="#Overview"><span>Overview</span></a></li><li><a class="tocitem" href="#Simulate-data"><span>Simulate data</span></a></li><li><a class="tocitem" href="#Sensitivity-maps-(coil-receive)"><span>Sensitivity maps (coil receive)</span></a></li><li><a class="tocitem" href="#B1-transmit-maps:-ground-truth"><span>B1+ transmit maps: ground truth</span></a></li><li><a class="tocitem" href="#One-at-a-time-double-angle-measurement"><span>One-at-a-time double angle measurement</span></a></li><li><a class="tocitem" href="#Regularized-B1-mapping"><span>Regularized B1+ mapping</span></a></li><li><a class="tocitem" href="#Discussion"><span>Discussion</span></a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>B1+ mapping</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>B1+ mapping</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/MagneticResonanceImaging/MRIFieldmaps.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/MagneticResonanceImaging/MRIFieldmaps.jl/blob/main/docs/lit/examples/04-b1map.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="04-b1map"><a class="docs-heading-anchor" href="#04-b1map">B1+ mapping</a><a id="04-b1map-1"></a><a class="docs-heading-anchor-permalink" href="#04-b1map" title="Permalink"></a></h1><p>This page illustrates regularized B1+ map estimation from MRI images using the Julia package <a href="https://github.com/MagneticResonanceImaging/MRIFieldmaps.jl"><code>MRIFieldmaps</code></a>.</p><p>This page comes from a single Julia file: <a href="https://github.com/MagneticResonanceImaging/MRIFieldmaps.jl/blob/main/docs/lit/examples/04-b1map.jl"><code>04-b1map.jl</code></a>.</p><p>You can access the source code for such Julia documentation using the &#39;Edit on GitHub&#39; link in the top right. You can view the corresponding notebook in <a href="https://nbviewer.org/">nbviewer</a> here: <a href="https://nbviewer.org/github/MagneticResonanceImaging/MRIFieldmaps.jl/tree/gh-pages/dev/generated/examples/04-b1map.ipynb"><code>04-b1map.ipynb</code></a>, or open it in <a href="https://mybinder.org/">binder</a> here: <a href="https://mybinder.org/v2/gh/MagneticResonanceImaging/MRIFieldmaps.jl/gh-pages?filepath=dev/generated/examples/04-b1map.ipynb"><code>04-b1map.ipynb</code></a>.</p><h3 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h3><p>Packages needed here.</p><pre><code class="language-julia hljs">using BlochSim: snr2sigma
+using ImagePhantoms: ellipse_parameters, SheppLoganBrainWeb, ellipse
+using ImagePhantoms: phantom
+using MIRTjim: jim, prompt
+using Random: seed!
+using Unitful: mm
+using Plots: RGB, cgrad, default
+default(markerstrokecolor=:auto, label=&quot;&quot;)</code></pre><p>The following line is helpful when running this file as a script; this way it will prompt user to hit a key after each figure is displayed.</p><pre><code class="language-julia hljs">isinteractive() ? jim(:prompt, true) : prompt(:draw);</code></pre><h2 id="Overview"><a class="docs-heading-anchor" href="#Overview">Overview</a><a id="Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Overview" title="Permalink"></a></h2><p>The approach considered here is based on methods described in Ch. V of the <a href="https://hdl.handle.net/2027.42/86473">2011 PhD Thesis of Amanda Funai</a>. That work in term is a significant extension of the 2007 ISBI paper <a href="https://doi.org/10.1109/ISBI.2007.356927">&quot;Regularized B1+ map estimation in MRI&quot;</a> by Amanda Funai, J A Fessler, W Grissom, D C Noll.</p><p>Note that B₁ has units of Tesla (magnetic field strength), but in this work we are really just estimating a scaling factor κ map that is the <em>ratio</em> of the apparent B₁ divided by the target B₁ value, i.e., if we prescribe a target 80° flip angle, but the actual flip is only 60° in a given voxel, then κ = 0.75 in that voxel. Everything called a &quot;B1 map&quot; below is really a &quot;κ map&quot;.</p><h2 id="Simulate-data"><a class="docs-heading-anchor" href="#Simulate-data">Simulate data</a><a id="Simulate-data-1"></a><a class="docs-heading-anchor-permalink" href="#Simulate-data" title="Permalink"></a></h2><p>For simplicity we consider simulated data here using a basic Shepp-Logan type of ellipse phantom and highly simplified transmit and receive coils.</p><p>Image geometry:</p><pre><code class="language-julia hljs">fovs = (256mm, 250mm)
+nx, ny = (128, 100) .* 1
+dx, dy = fovs ./ (nx,ny)
+x = (-(nx÷2):(nx÷2-1)) * dx
+y = (-(ny÷2):(ny÷2-1)) * dy;</code></pre><p>Define Shepp-Logan phantom object, with random complex phases per inner ellipse to make it a bit more realistic.</p><pre><code class="language-julia hljs">params = ellipse_parameters(SheppLoganBrainWeb() ; disjoint=true, fovs)
+seed!(0)
+phases = [1; rand(ComplexF32,9)] # random phases
+params = [(p[1:5]..., phases[i]) for (i, p) in enumerate(params)]
+oa = ellipse(params)
+oversample = 3
+image0 = phantom(x, y, oa, oversample)
+ri_fun = z -&gt; cat(dims = ndims(z)+1, real(z), imag(z))
+p0 = jim(x, y, ri_fun(image0), &quot;Digital phantom\n (real | imag)&quot;;
+ xlabel = &quot;x&quot;, ylabel = &quot;y&quot;, )</code></pre><img src="dfb3c7ad.svg" alt="Example block output"/><p>In practice, sensitivity maps are usually estimated only over portion of the image array, so we define a simple <code>mask</code> here to exercise this issue.</p><pre><code class="language-julia hljs">mask = trues(nx,ny)
+mask[:,[1:1;end-1:end]] .= false # mask out outer border of maps
+mask[[1:8;end-8:end],:] .= false
+@assert mask .* image0 == image0
+pmask = jim(x, y, mask, &quot;mask&quot;; xlabel=&quot;x&quot;, ylabel=&quot;y&quot;)</code></pre><img src="decd8260.svg" alt="Example block output"/><h2 id="Sensitivity-maps-(coil-receive)"><a class="docs-heading-anchor" href="#Sensitivity-maps-(coil-receive)">Sensitivity maps (coil receive)</a><a id="Sensitivity-maps-(coil-receive)-1"></a><a class="docs-heading-anchor-permalink" href="#Sensitivity-maps-(coil-receive)" title="Permalink"></a></h2><p>Here we use 3 highly idealized receive coil sensitivity maps, roughly corresponding to the <a href="https://en.wikipedia.org/wiki/Biot-Savart_law">Biot-Savart law</a> for an infinite thin wire, as a crude approximation of a <a href="https://en.wikipedia.org/wiki/Radiofrequency_coil">birdcage coil</a>.</p><pre><code class="language-julia hljs">&quot;&quot;&quot;
+    biot_savart_wire(x, y, wx, wy)
+Compute response at `(x,y)` to wire at `(wx,wy)`
+&quot;&quot;&quot;
+function biot_savart_wire(x, y, wx, wy)
+    phase = cis(atan(y-wy, x-wx))
+    return oneunit(x) / sqrt(sum(abs2, (x-wx, y-wy))) * phase # 1/r falloff
+end
+
+function _rcv(wx, wy)
+    wire = (a,b) -&gt; biot_savart_wire(a, b, wx, wy)
+    return wire.(x, y&#39;)
+end
+
+smap = stack(splat(_rcv), (
+    (maximum(x) + 8dx, maximum(y) + 8dy), # upper right corner
+    (maximum(x) + 8dx, minimum(y) - 8dy), # lower right corner
+    (minimum(x) - 20dx, 0dy), # middle left border
+  )
+);</code></pre><p>Typical sensitivity map estimation methods normalize the maps so that the square-root of the sum of squares (SSoS) is unity:</p><pre><code class="language-julia hljs">ssos = sqrt.(sum(abs2, smap, dims=ndims(smap))) # SSoS
+ssos = selectdim(ssos, ndims(smap), 1)
+
+ncoilr = last(size(smap))
+for ic in 1:ncoilr
+    tmp_s = selectdim(smap, ndims(smap), ic)
+    tmp_s ./= ssos # normalize
+    tmp_s[.!mask] .= 0 # apply mask
+end
+
+ps = jim(
+ jim(x, y, abs.(smap), &quot; |Sensitivity maps| (ncoilr=$ncoilr)&quot;;
+  color=:cividis, ncol=ncoilr, prompt=false),
+ jim(x, y, angle.(smap), &quot;∠(Sensitivity maps)&quot;;
+  color=:hsv, ncol=ncoilr, prompt=false,
+  clim=(-π,π), colorbar_ticks = ([-π, 0, π], [&quot;-π&quot;, &quot;0&quot;, &quot;π&quot;]),
+ ),
+ layout = (2,1),
+)</code></pre><img src="7e5c9df1.svg" alt="Example block output"/><h2 id="B1-transmit-maps:-ground-truth"><a class="docs-heading-anchor" href="#B1-transmit-maps:-ground-truth">B1+ transmit maps: ground truth</a><a id="B1-transmit-maps:-ground-truth-1"></a><a class="docs-heading-anchor-permalink" href="#B1-transmit-maps:-ground-truth" title="Permalink"></a></h2><pre><code class="language-julia hljs">ncoilt = 4
+function _xmit(it::Int)
+    wx, wy = sincos(2π/ncoilt*it) .* 3maximum(x)
+    wire = (a,b) -&gt; biot_savart_wire(a, b, wx, wy)
+    wire.(x, y&#39;)
+end
+tmp = map(_xmit, 1:ncoilt)
+tmp = cat(dims=3, tmp...)
+b1_true = tmp / abs(tmp[end÷2,end÷2,1]) # ≈1 at middle
+
+p1 = jim(
+ jim(x, y, abs.(b1_true); ncol=ncoilt, title=&quot;Magnitude&quot;,
+  prompt=false, xlabel=&quot;x&quot;, ylabel=&quot;y&quot;),
+ jim(x, y, angle.(b1_true); ncol=ncoilt, title=&quot;Phase&quot;, color=:hsv,
+  prompt=false, clim=(-π,π), colorbar_ticks = ([-π, 0, π], [&quot;-π&quot;, &quot;0&quot;, &quot;π&quot;])),
+ plot_title=&quot;|B1+| maps: Ground truth (ncoilt = $ncoilt)&quot;,
+ layout = (2,1),
+)</code></pre><img src="be86217f.svg" alt="Example block output"/><h2 id="One-at-a-time-double-angle-measurement"><a class="docs-heading-anchor" href="#One-at-a-time-double-angle-measurement">One-at-a-time double angle measurement</a><a id="One-at-a-time-double-angle-measurement-1"></a><a class="docs-heading-anchor-permalink" href="#One-at-a-time-double-angle-measurement" title="Permalink"></a></h2><pre><code class="language-julia hljs">α_target = π/4 # target flip angle
+chi = [1; 2] * α_target
+M = size(chi,1) # number of measurements
+Hfun = sin # ideal model that ignores steady-state and slice-profile effects
+Ffun(z) = sign(z) * Hfun(abs(z))
+N = (nx, ny) # image dimensions
+xtrue = reshape(chi, 1, 1, 1, M) .*
+        reshape(b1_true, N..., ncoilt, 1) # (N) × ncoilt × M
+@show extrema(abs, xtrue)
+ρtrue = image0 .* Ffun.(xtrue) # excited magnetization (N) × ncoilt × M
+@show extrema(abs, ρtrue)
+ytrue = reshape(smap, N..., 1, 1, ncoilr) .*
+        reshape(ρtrue, N..., ncoilt, M, 1); # (N) × ncoilt × M × ncoilr</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">extrema(abs, xtrue) = (0.5726235815009828, 2.3876620871009444)
+extrema(abs, ρtrue) = (0.0, 2.2730979921315777)</code></pre><p>Add noise</p><pre><code class="language-julia hljs">snr_db = 25 # SNR in dB
+σ = snr2sigma(snr_db, ytrue) # noise std for the desired SNR
+ymeas = ComplexF32.(ytrue) + Float32(σ) * randn(ComplexF32, size(ytrue));</code></pre><p>Receive coil complex coil combination, using ideal receive coil sensitivity maps for simplicity.</p><pre><code class="language-julia hljs">ycomb = conj(reshape(smap, N..., 1, 1, ncoilr)) .* ymeas
+ycomb = sum(ycomb, dims = ndims(ycomb))
+ycomb = reshape(ycomb, N..., ncoilt, M) # (N) × ncoilt × M
+
+jim(x, y, abs.(ycomb); nrow=M, ncol=ncoilt,
+ title = &quot;|Coil-combined data| for M=$M&quot;)</code></pre><img src="0d6cfd33.svg" alt="Example block output"/><p>(The 2nd row of images is brighter because of the double angle.)</p><p>Estimate B1+ map for each transmit coil using basic double-angle method</p><pre><code class="language-julia hljs">tmp = abs.( 0.5 *
+    selectdim(ycomb, ndims(ycomb), 2) ./
+    selectdim(ycomb, ndims(ycomb), 1)
+)
+tmp = min.(tmp, 1)
+b1_dam = acos.(tmp) / α_target; # note scaling!</code></pre><p>Examine B1 error only inside the head:</p><pre><code class="language-julia hljs">emask = image0 .!= 0
+
+mag_err = abs.(b1_true) - abs.(b1_dam) # todo: mag error only?
+mag_err .*= emask # show error in the head only
+brmse = round(sqrt(sum(abs2, mag_err) / count(emask) / ncoilt), sigdigits=2)
+
+clim = extrema(abs, b1_true)
+RGB255(args...) = RGB((args ./ 255)...)
+color = cgrad([RGB255(230, 80, 65), :black, RGB255(23, 120, 232)])
+pdam = jim(
+ jim(x, y, b1_dam, &quot;Estimated B1+ maps, SNR=$snr_db&quot;;
+  nrow=1, prompt=false, clim,),
+ jim(x, y, emask .* abs.(b1_true), &quot;True B1+ maps&quot;;
+  nrow=1, prompt=false, clim),
+ jim(x, y, mag_err, &quot;Mag. Error, RMSE=$brmse&quot;;
+  nrow=1, prompt=false, color, clim=(-1,1).*0.1),
+ layout = (3,1),
+)</code></pre><img src="3f982e06.svg" alt="Example block output"/><h2 id="Regularized-B1-mapping"><a class="docs-heading-anchor" href="#Regularized-B1-mapping">Regularized B1+ mapping</a><a id="Regularized-B1-mapping-1"></a><a class="docs-heading-anchor-permalink" href="#Regularized-B1-mapping" title="Permalink"></a></h2><p>todo</p><h2 id="Discussion"><a class="docs-heading-anchor" href="#Discussion">Discussion</a><a id="Discussion-1"></a><a class="docs-heading-anchor-permalink" href="#Discussion" title="Permalink"></a></h2><p>todo</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../03-phasecontrast/">« Phase contrast B0 mapping</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 21 July 2026 18:46">Tuesday 21 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
