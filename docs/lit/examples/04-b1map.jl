@@ -22,6 +22,7 @@ using MIRTjim: jim, prompt
 using Random: seed!
 using Unitful: mm
 using Plots: RGB, cgrad, default
+using LinearAlgebra, Statistics
 default(markerstrokecolor=:auto, label="")
 
 
@@ -132,8 +133,8 @@ end
 
 smap = stack(splat(_rcv), (
     (maximum(x) + 8dx, maximum(y) + 8dy), # upper right corner
-    # (maximum(x) + 8dx, minimum(y) - 8dy), # lower right corner
-    # (minimum(x) - 20dx, 0dy), # middle left border
+    (maximum(x) + 8dx, minimum(y) - 8dy), # lower right corner
+    (minimum(x) - 20dx, 0dy), # middle left border
   )
 );
 
@@ -257,31 +258,33 @@ pdam = jim(
   nrow=1, prompt=false, clim),
  jim(x, y, mag_err, "Mag. Error, RMSE=$brmse";
   nrow=1, prompt=false, color, clim=(-1,1).*0.1),
- layout = (3,1),
+ layout = (2, 2),
 )
 
 
 
 ## Regularized B1+ mapping
 ycomb = dropdims(ycomb, dims = 3)
-beta = 0.90
-MAX_ITTER = 5000
+beta = 0.5
+MAX_ITTER = 100
 zk_opt, fj_opt = b1_fit(beta, ycomb, chi, sin, MAX_ITTER)
 
-function compute_b1_map_rsos(zk_opt::AbstractArray)
-    # zk_opt is of shape (N, D, K)
-    # Takes the root-sum-of-squares across the coil dimension (dim 3)
-    return sqrt.(sum(abs2, zk_opt, dims=3)[:, :, 1])
+function normalized_rmse(x_true, x_est)
+    return norm(x_true -x_est) / norm(x_true)
 end
 
-b1_map = compute_b1_map_rsos(zk_opt)
-
-pdam = jim(
- jim(x, y, b1_dam, "Estimated B1+ maps, SNR=$snr_db";
-  nrow=1, prompt=false, clim,),
- jim(x, y, b1_map, "B1+?"; nrow=1, prompt=false, clim,),
- jim(x, y, emask .* abs.(b1_true), "True B1+ maps";
-  nrow=1, prompt=false, clim),
+true_masked = b1_true .* emask
+dam_masked = b1_dam .* emask
+zk_opt_masked = zk_opt .* emask
+nrmse_reg = round(normalized_rmse(abs.(true_masked), abs.(zk_opt_masked)), sigdigits=2)
+nrmse_dam = round(normalized_rmse(abs.(true_masked), abs.(dam_masked)), sigdigits=2)
+jim(
+    jim(x, y, true_masked, "True B1+ Map"; prompt=false, nrow=1),
+    jim(x, y, dam_masked, "DAM B1+ Map"; prompt=false, nrow=1),
+    jim(x, y, zk_opt_masked, "Regularized B1+ Map"; prompt=false, nrow=1),
+    jim(x, y, abs.(true_masked) - abs.(dam_masked), "DAM Absolute Error, NRMSE=$nrmse_dam"; prompt=false, nrow=1, color),
+    jim(x, y, abs.(true_masked) - abs.(zk_opt_masked), "Regularized Absolute Error=$nrmse_reg"; prompt=false, nrow=1, color),
+    layout = (2, 3)
 )
 #=
 ## Discussion
