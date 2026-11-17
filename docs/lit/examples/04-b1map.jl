@@ -17,11 +17,12 @@ using the Julia package
 using BlochSim: snr2sigma
 using ImagePhantoms: ellipse_parameters, SheppLoganBrainWeb, ellipse
 using ImagePhantoms: phantom
-#src using MRIFieldmaps: #todo
+using MRIFieldmaps: b1_fit
 using MIRTjim: jim, prompt
 using Random: seed!
 using Unitful: mm
-using Plots: RGB, cgrad, default
+using Plots: RGB, cgrad, default, plot, heatmap
+using LinearAlgebra, Statistics
 default(markerstrokecolor=:auto, label="")
 
 
@@ -167,7 +168,7 @@ ps = jim(
 #=
 ## B1+ transmit maps: ground truth
 =#
-ncoilt = 4
+ncoilt = 1
 function _xmit(it::Int)
     wx, wy = sincos(2π/ncoilt*it) .* 3maximum(x)
     wire = (a,b) -> biot_savart_wire(a, b, wx, wy)
@@ -257,16 +258,44 @@ pdam = jim(
   nrow=1, prompt=false, clim),
  jim(x, y, mag_err, "Mag. Error, RMSE=$brmse";
   nrow=1, prompt=false, color, clim=(-1,1).*0.1),
- layout = (3,1),
+ layout = (2, 2),
 )
 
 
 
-#=
 ## Regularized B1+ mapping
-todo
-=#
+ycomb = dropdims(ycomb, dims = 3)
+beta = 0.2
+MAX_ITTER = 5000
+zk_opt, fj_opt = b1_fit(beta, ycomb, chi, sin, MAX_ITTER)
 
+function normalized_rmse(x_true, x_est)
+    return norm(x_true -x_est) / norm(x_true)
+end
+
+true_masked = dropdims(b1_true .* emask, dims=3)
+dam_masked = dropdims(b1_dam .* emask, dims=3)
+zk_opt_masked = dropdims(zk_opt .* emask, dims=3)
+
+nrmse_reg = round(normalized_rmse(abs.(true_masked), abs.(zk_opt_masked)), sigdigits=2)
+nrmse_dam = round(normalized_rmse(abs.(true_masked), abs.(dam_masked)), sigdigits=2)
+
+# Compute shared color limits so B1+ maps and error maps are directly comparable
+b1_clims = (0, maximum(abs, true_masked))
+err_dam = abs.(abs.(true_masked) .- abs.(dam_masked))
+err_reg = abs.(abs.(true_masked) .- abs.(zk_opt_masked))
+err_max = max(maximum(abs, err_dam), maximum(abs, err_reg))
+err_clims = (0, err_max)
+
+p1 = heatmap(x, y, abs.(true_masked)', title="True B1+ Map", c=:grays, clims=b1_clims, aspect_ratio=:equal)
+p2 = heatmap(x, y, abs.(dam_masked)', title="DAM B1+ Map", c=:grays, clims=b1_clims, aspect_ratio=:equal)
+p3 = heatmap(x, y, abs.(zk_opt_masked)', title="Regularized B1+ Map", c=:grays, clims=b1_clims, aspect_ratio=:equal)
+
+p4 = plot(framestyle=:none) # Empty placeholder for the 6th slot in the 2x3 grid
+p5 = heatmap(x, y, err_dam', title="DAM Error, NRMSE=$nrmse_dam", c=:hot, clims=err_clims, aspect_ratio=:equal)
+p6 = heatmap(x, y, err_reg', title="Reg Error, NRMSE=$nrmse_reg", c=:hot, clims=err_clims, aspect_ratio=:equal)
+
+plot(p1, p2, p3, p4, p5, p6, layout=(2, 3), size=(1200, 750))
 #=
 ## Discussion
 todo

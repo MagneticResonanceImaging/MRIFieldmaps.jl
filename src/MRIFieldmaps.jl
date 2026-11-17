@@ -27,5 +27,6 @@ module MRIFieldmaps
     include("b0scale.jl")
     include("combine.jl")
     include("b0map.jl")
+    include("b1map.jl")
 
 end # module

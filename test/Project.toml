@@ -1,5 +1,7 @@
 [deps]
+ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 ImageGeoms = "9ee76f2b-840d-4475-b6d6-e485c9297852"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MRIFieldmaps = "5af58b90-8a55-4daf-adb4-2008a66a38cf"
