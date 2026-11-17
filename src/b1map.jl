@@ -200,7 +200,7 @@ end
 - `Chi` Matrix of scaling factors of size (M, K) where m is the measurement number and k is the coil number.
 
 # Out
-- 
+- Estimated composite map of size (N1, N2, M)
 """
 function compute_composite_map(
         z_hat::AbstractArray,
@@ -212,10 +212,10 @@ function compute_composite_map(
 
     x = zeros(eltype(z_hat), N1, N2, M)
     for k in 1:K
-        z_flat = reshape(z_hat[:, :, k], :, 1)  # (N*D) x 1
-        x_perm = chi[:, k] * z_flat'            # M x (N*D)
-        x_perm = reshape(x_perm, M, N1, N2)       # M x N x D
-        x += permutedims(x_perm, (2, 3, 1))      # N x D x M
+        z_flat = reshape(z_hat[:, :, k], :, 1)  # (N1*N2) x 1
+        x_perm = chi[:, k] * z_flat'            # M x (N1*N2)
+        x_perm = reshape(x_perm, M, N1, N2)       # M x N1 x N2
+        x += permutedims(x_perm, (2, 3, 1))      # N1 x N2 x M
     end
 
     return x
